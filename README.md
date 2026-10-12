@@ -1,70 +1,76 @@
-# 本地预览
+# 童年回忆 · 动画主题馆
 
-浏览器的 CORS 策略会拦截 `file://` 协议下的 fetch 请求，
-所以**不能直接双击 index.html**，需要起一个本地静态服务。
+一个零依赖的单文件静态站：**28 部国产动画**的卡片墙，鼠标悬停时卡片封面直接被 B 站主题曲视频顶替；
+顶部是一条自动横向滚动的海报带，悬停停住并试听该片主题曲，点击进对应子页面。
 
-在项目根目录执行任意一条：
+线上地址：<https://dayword.github.io/blog/>
 
-```bash
-python -m http.server 8000
-# 或
-npx serve .
-# 或
-php -S localhost:8000
-```
+## 这里原来是什么
 
-然后打开 <http://localhost:8000>
+这个仓库原本是「Dayword 的技术笔记」（8 篇 Python / 前端 / 数据库文章）。
+现在首页 `index.html` 换成了童年回忆站，但**原来的内容没有删除**：
 
-# 部署
+- `blog.html` —— 原博客的入口，访问 <https://dayword.github.io/blog/blog.html> 即可打开。
+  （它就是原来的 `index.html`，只是改了文件名。）
+- `posts/` —— 8 篇原文（JSON，正文为 Markdown）
+- `assets/css/`、`assets/js/` —— 原博客的样式与脚本
 
-推送到 GitHub 的 `main` 分支即可，`.github/workflows/pages.yml` 会自动发布到 GitHub Pages。
+想恢复成原来那样，把 `blog.html` 改回 `index.html` 即可。
 
-# 目录结构
+## 站点能力
+
+- **卡片墙**：按 `经典怀旧 / 国漫少儿 / 国漫玄幻 / 动画电影·特摄` 分组筛选。
+  悬停卡片 → 封面换成 B 站主题曲视频（海报的模糊放大版垫底，不留黑边）；移开即收走。
+- **滚动海报带**：自动滚动；悬停停住并试听主题曲（描红边 + `♪`）；按住左键可拖动；
+  点击进子页面。
+- **子页面**（`#/a/<id>`）：讲解长文 + 正片/主题曲两个视频源（带切换按钮）+ 主题曲歌单 + 海报墙。
+- 零构建、零依赖、无后端。数据全部内联在 HTML 里，所以 `file://` 双击也能跑
+  （B 站视频需要联网）。
+
+## 目录结构
 
 ```
 blog/
-├── index.html              # 入口
+├── index.html                    # 站点全部内容（单文件，数据内联）
 ├── assets/
-│   ├── css/style.css       # 全站样式（含深色模式）
-│   └── js/
-│       ├── markdown.js     # 零依赖 Markdown 解析 + 代码高亮
-│       ├── store.js        # 数据层 —— 接后端只改这一个文件
-│       └── app.js          # 路由与页面渲染
-└── posts/                  # 文章内容（JSON，正文为 Markdown）
+│   ├── posters/p01..p28/NN.jpg   # 188 张动画海报
+│   ├── audio/pNN_N.mp3           # 55 首主题曲（128kbps，约 161 MB）
+│   ├── css/style.css             # （原博客遗留，blog.html 用）
+│   └── js/{markdown,store,app}.js
+├── posts/                        # （原博客遗留）8 篇文章
+├── blog.html                     # （原博客入口，改名前是 index.html）
+└── .github/workflows/pages.yml   # 推 main 自动部署到 GitHub Pages
 ```
 
-# 新增一篇文章
+## 本地预览
 
-1. 在 `posts/` 下新建 `<slug>.json`：
+`file://` 直接双击 `index.html` 即可（数据内联，没有 fetch）。
+若想看 B 站视频，起个本地服务更稳：
 
-```json
-{
-  "slug": "my-post",
-  "title": "标题",
-  "date": "2026-10-11",
-  "author": "Dayword",
-  "tags": ["标签A", "标签B"],
-  "summary": "列表页显示的一句话摘要",
-  "content": "## 小标题\n\n正文用 Markdown 写。"
-}
+```bash
+python -m http.server 8000
+# 然后打开 http://localhost:8000
 ```
 
-2. 把 `my-post` 加进 `assets/js/store.js` 里的 `INDEX` 数组。
+## 重新生成 / 改成自己的版本
 
-`content` 字段支持：标题、段落、引用、有序/无序列表、代码块、行内代码、
-粗体、斜体、删除线、链接、图片、表格、分隔线。
+生成逻辑封装在 WorkBuddy 技能 `childhood-memories-site` 里：
 
-# 接云端数据库
+```bash
+# 拉素材（243 个文件 / 约 224 MB，已存在的会跳过）
+python scripts/fetch_assets.py --out ./childhood-memories
+# 渲染单文件页面
+python scripts/build_site.py  --out ./childhood-memories
+# 推回 GitHub
+python scripts/publish.py --repo Dayword/blog --dir ./childhood-memories
+```
 
-所有数据读取都收敛在 `assets/js/store.js` 的 `DataStore` 对象上，共 4 个方法：
+想换片单（换成别的动画、电影、游戏）：改写 `references/site_data.json` 里的
+`DATA` / `STORY` / `THEME`，按同样的 `assets/posters/pNN/NN.jpg` + `assets/audio/pNN_N.mp3`
+结构准备素材，再跑上面两步即可。详细的数据 schema 与交互机制见技能里的
+`references/site-anatomy.md`。
 
-| 方法 | 作用 |
-|---|---|
-| `list()` | 返回全部文章（按日期倒序） |
-| `get(slug)` | 按 slug 取单篇 |
-| `tags()` | 返回 `[{name, count}]` |
-| `byTag(tag)` | 按标签筛选 |
+## 版权
 
-把这四个方法改成请求你的后端接口即可，页面代码无需改动。
-
-图片与附件同理：把 `content` 里的图片地址换成云端存储返回的 URL。
+海报与主题曲来自公开网络，版权归各自权利人所有，本站仅作展示与学习用途；
+视频通过哔哩哔哩官方外链播放器嵌入，未做任何转载。

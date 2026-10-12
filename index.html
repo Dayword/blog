@@ -1,56 +1,748 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Dayword 的技术笔记 — Python / 前端 / 数据库</title>
-  <meta name="description" content="记录 Python、前端、数据库与工程实践中的真实问题与解法，每篇都尽量给出可运行的代码。">
-  <meta name="theme-color" content="#f7f8fa">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231a6ef5'/><text y='72' x='50' text-anchor='middle' font-size='58' font-weight='bold' fill='white' font-family='sans-serif'>D</text></svg>">
-  <link rel="stylesheet" href="assets/css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>童年回忆 · 动漫主题曲</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f5f7fa;color:#243043}
+.navbar{position:fixed;top:0;left:0;right:0;height:65px;background:rgba(255,255,255,.96);
+  backdrop-filter:blur(12px);box-shadow:0 2px 15px rgba(0,0,0,.08);z-index:1000;
+  display:flex;align-items:center;justify-content:space-between;padding:0 42px}
+.logo{font-size:24px;font-weight:800;display:flex;gap:10px;align-items:center;
+  background:linear-gradient(135deg,#FF6B6B,#FFD93D,#6BCB77);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent}
+.logo i{-webkit-text-fill-color:#FF6B6B}
+.nav-hint{font-size:13px;color:#8b98a9}
+.hero{position:relative;min-height:620px;padding:104px 0 34px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;overflow:hidden;background:#18203a}
+/* 背景：10 条竖长条封面（每条占 1/10 宽，高度占满） */
+.hero-strips{position:absolute;inset:0;display:flex;z-index:0}
+.hero-strip{flex:0 0 10%;width:10%;overflow:hidden;position:relative;
+  box-shadow:inset -1px 0 0 rgba(255,255,255,.10)}
+.hero-strip img{width:100%;height:100%;object-fit:cover;display:block;
+  -webkit-user-drag:none;user-select:none;opacity:.72;
+  filter:saturate(1.1) brightness(1.02)}
+.hero::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:linear-gradient(180deg,rgba(16,22,44,.78) 0%,rgba(16,22,44,.38) 32%,
+             rgba(16,22,44,.60) 58%,rgba(16,22,44,.90) 84%,rgba(18,24,46,1) 100%),
+             radial-gradient(circle at 20% 18%,rgba(255,255,255,.18),transparent 45%),
+             radial-gradient(circle at 80% 72%,rgba(255,217,61,.24),transparent 52%)}
+.hero-content{position:relative;z-index:2;text-align:center;color:#fff;padding:0 20px}
+/* 滚动海报带：左→中→右，小→大→小 */
+.hero-marquee{position:relative;z-index:2;width:100%;overflow:hidden;cursor:grab;user-select:none;
+  touch-action:pan-y;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%)}
+.hero-marquee.dragging{cursor:grabbing}
+.marquee-track{display:flex;align-items:center;gap:28px;padding:40px 0 26px;will-change:transform}
+.mq-item{flex:0 0 auto;width:170px;position:relative;cursor:pointer;transform-origin:center center}
+.mq-item img{width:170px;height:225px;object-fit:cover;border-radius:16px;display:block;
+  box-shadow:0 16px 36px rgba(8,14,28,.42);background:#2b3350;
+  -webkit-user-drag:none;user-select:none}
+.mq-item::after{content:"";position:absolute;inset:0;border-radius:16px;
+  background:linear-gradient(to top,rgba(8,14,28,.78),transparent 52%)}
+.mq-name{position:absolute;left:6px;right:6px;bottom:9px;z-index:2;text-align:center;color:#fff;
+  font-size:13px;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.75);pointer-events:none}
+.mq-item:hover img{box-shadow:0 18px 44px rgba(255,217,61,.55)}
+/* 悬停试听中的那张：描一圈红边 + 名字前加个音符，让"在放歌"这件事看得见 */
+.mq-item.playing img{box-shadow:0 18px 44px rgba(255,107,107,.6);
+  outline:2px solid #FF6B6B;outline-offset:3px}
+.mq-item.playing .mq-name::before{content:"♪ "}
+.hero-title{font-size:clamp(38px,7vw,76px);font-weight:800;letter-spacing:4px;
+  text-shadow:0 6px 30px rgba(0,0,0,.28)}
+.hero-subtitle{font-size:clamp(15px,2.4vw,22px);margin-top:14px;opacity:.92}
+.hero-tip{margin-top:26px;display:inline-flex;gap:10px;align-items:center;font-size:14px;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
+  padding:10px 20px;border-radius:40px}
+.container{max-width:1480px;margin:0 auto;padding:46px 34px 90px}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+  margin-bottom:30px}
+.tabs{display:flex;flex-wrap:wrap;gap:10px}
+.tab{padding:9px 20px;border-radius:40px;background:#fff;color:#5b6879;cursor:pointer;
+  font-size:14px;border:1px solid #e6ebf2;transition:.2s;user-select:none}
+.tab:hover{border-color:#FF6B6B;color:#FF6B6B}
+.tab.active{background:linear-gradient(135deg,#FF6B6B,#FF9F45);color:#fff;border-color:transparent;
+  box-shadow:0 8px 20px rgba(255,107,107,.32)}
+.count{font-size:13px;color:#8b98a9}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:26px}
+.card{background:#fff;border-radius:20px;overflow:hidden;cursor:pointer;position:relative;
+  box-shadow:0 6px 24px rgba(20,40,80,.08);transition:transform .28s,box-shadow .28s;
+  display:flex;flex-direction:column}
+.card:hover{transform:translateY(-8px);box-shadow:0 20px 44px rgba(20,40,80,.18)}
+.cover{position:relative;aspect-ratio:3/4;overflow:hidden;background:#eef2f7}
+.cover img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s,opacity .25s}
+.card:hover .cover img{transform:scale(1.07)}
+.cover-mask{position:absolute;inset:0;background:linear-gradient(to top,rgba(12,20,35,.82) 0%,
+  rgba(12,20,35,.15) 45%,transparent 70%);opacity:.9}
+.playing-flag{position:absolute;top:12px;left:12px;display:flex;gap:6px;align-items:center;
+  background:rgba(255,107,107,.95);color:#fff;font-size:12px;padding:5px 11px;border-radius:30px;
+  opacity:0;transform:translateY(-6px);transition:.22s}
+.card.hovering .playing-flag{opacity:1;transform:none}
+.playing-flag .bar{display:flex;gap:2px;align-items:flex-end;height:11px}
+.playing-flag .bar i{width:3px;background:#fff;border-radius:2px;animation:eq .9s infinite ease-in-out}
+.playing-flag .bar i:nth-child(2){animation-delay:.15s}
+.playing-flag .bar i:nth-child(3){animation-delay:.3s}
+@keyframes eq{0%,100%{height:4px}50%{height:11px}}
+.cover-title{position:absolute;left:14px;right:14px;bottom:12px;color:#fff}
+.cover-title h3{font-size:17px;font-weight:700;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+.cover-title span{font-size:12px;opacity:.85}
+.card-body{padding:14px 16px 18px}
+.card-desc{font-size:12.5px;line-height:1.65;color:#6c7a8d;min-height:62px}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.card-tag{font-size:11px;color:#7d6bd6;background:#f0eefc;padding:3px 9px;border-radius:20px}
+.card-song{margin-top:12px;font-size:12px;color:#a3adbb;display:flex;gap:6px;align-items:center}
+.footer{text-align:center;padding:34px;color:#9aa6b5;font-size:13px}
+/* 子页面里复用的通用件：缩略图 / 播放器 */
+.thumbs{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:10px;cursor:pointer;
+  opacity:.55;border:2px solid transparent;transition:.2s;flex:0 0 auto}
+.thumbs img:hover{opacity:1}
+.thumbs img.active{opacity:1;border-color:#FFD93D}
+.player{background:linear-gradient(135deg,#fff5f5,#f7f4ff);border:1px solid #f0e6f5;
+  border-radius:18px;padding:18px 20px;box-shadow:0 6px 24px rgba(20,40,80,.07)}
+.player-row{display:flex;align-items:center;gap:16px}
+.play-btn{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;flex:0 0 auto;
+  background:linear-gradient(135deg,#FF6B6B,#FF9F45);color:#fff;font-size:20px;
+  box-shadow:0 10px 24px rgba(255,107,107,.42);transition:.2s}
+.play-btn:hover{transform:scale(1.06)}
+.now-title{font-size:15px;font-weight:700}
+.now-artist{font-size:12.5px;color:#8b98a9;margin-top:3px}
+.playlist{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.playlist-item{display:flex;justify-content:space-between;gap:10px;align-items:center;
+  font-size:13px;padding:9px 13px;border-radius:10px;background:#fff;cursor:pointer;
+  border:1px solid #eef2f7;color:#5b6879}
+.playlist-item:hover{border-color:#FF6B6B;color:#FF6B6B}
+.playlist-item.active{background:#fff0f0;border-color:#FF6B6B;color:#FF6B6B;font-weight:700}
+.toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:rgba(24,34,52,.94);
+  color:#fff;font-size:13.5px;padding:12px 22px;border-radius:40px;z-index:3000;opacity:0;
+  pointer-events:none;transition:.3s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+/* ---------- 卡片悬停时：视频直接顶替封面 ----------
+   竖版封面框（3:4）里嵌 16:9 视频，上下必然留空 → 用海报自身的模糊放大版垫底，
+   这样不会出现生硬的黑色横条。鼠标移开后视频立刻收走，海报淡回来。 */
+.cover-blur{position:absolute;inset:-10%;background-size:cover;background-position:center;
+  filter:blur(20px) saturate(1.15) brightness(.62);opacity:0;transition:opacity .25s}
+.cover-player{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+  aspect-ratio:16/9;background:#000;opacity:0;pointer-events:none;transition:opacity .22s}
+.cover-player iframe{width:100%;height:100%;border:0;display:block}
+.card.hovering .cover-blur{opacity:1}
+.card.hovering .cover-mask{opacity:0}
+.card.hovering .cover img{opacity:0;transform:none}
+.card.hovering .cover-player{opacity:1;pointer-events:auto}
+/* ---------- 子页面（同文件内路由） ---------- */
+.page{display:none;padding-top:65px;min-height:100vh;background:#f5f7fa}
+.page.open{display:block}
+.page-bar{position:sticky;top:65px;z-index:60;background:rgba(255,255,255,.95);
+  backdrop-filter:blur(12px);border-bottom:1px solid #e9eef5;
+  display:flex;align-items:center;gap:14px;padding:12px 34px}
+.page-back{display:inline-flex;align-items:center;gap:8px;border:1px solid #e6ebf2;background:#fff;
+  color:#5b6879;font-size:14px;padding:8px 16px;border-radius:30px;cursor:pointer;transition:.2s;
+  font-family:inherit}
+.page-back:hover{border-color:#FF6B6B;color:#FF6B6B}
+.page-crumb{font-size:13px;color:#9aa6b5}
+.page-inner{max-width:1080px;margin:0 auto;padding:26px 34px 80px}
+
+.sp-hero{position:relative;border-radius:24px;overflow:hidden;background:#1a2138;
+  min-height:290px;display:flex;align-items:flex-end}
+.sp-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  filter:blur(16px) saturate(1.1);transform:scale(1.14);opacity:.5}
+.sp-hero-mask{position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(14,20,38,.93),rgba(14,20,38,.58) 56%,rgba(14,20,38,.34))}
+.sp-hero-main{position:relative;z-index:2;display:flex;gap:26px;align-items:flex-end;
+  padding:30px 32px;width:100%}
+.sp-poster{flex:0 0 160px;border-radius:16px;overflow:hidden;
+  box-shadow:0 18px 40px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.14)}
+.sp-poster img{width:160px;height:212px;object-fit:cover;display:block}
+.sp-head{color:#fff;min-width:0}
+.sp-head h1{font-size:clamp(26px,3.6vw,40px);font-weight:800;letter-spacing:1px;line-height:1.2}
+.sp-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;opacity:.82;margin-top:10px}
+.sp-lede{margin-top:14px;font-size:14.5px;line-height:1.85;opacity:.94;max-width:620px}
+.sp-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.sp-tags span{font-size:11.5px;background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.24);padding:4px 11px;border-radius:20px}
+
+.sp-sec{margin-top:38px}
+.sp-h2{font-size:19px;font-weight:800;color:#243043;display:flex;align-items:center;gap:10px;
+  margin-bottom:16px}
+.sp-h2 i{color:#FF6B6B}
+.sp-story{background:#fff;border-radius:20px;padding:6px 28px 24px;
+  box-shadow:0 6px 24px rgba(20,40,80,.07)}
+.sp-story h3{font-size:15.5px;font-weight:800;color:#3a4a63;margin:26px 0 8px;
+  padding-left:12px;border-left:4px solid #FFD93D}
+.sp-story p{font-size:14.5px;line-height:2;color:#5b6879;margin-top:10px}
+
+.sp-vtabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.sp-vtab{font-size:13px;padding:9px 16px;border-radius:30px;background:#fff;border:1px solid #e6ebf2;
+  color:#5b6879;cursor:pointer;transition:.2s;font-family:inherit}
+.sp-vtab:hover{border-color:#FF6B6B;color:#FF6B6B}
+.sp-vtab.active{background:linear-gradient(135deg,#FF6B6B,#FF9F45);color:#fff;border-color:transparent}
+.sp-video-wrap{border-radius:20px;overflow:hidden;background:#000;
+  box-shadow:0 10px 30px rgba(20,40,80,.16)}
+.sp-video-wrap iframe{display:block;width:100%;aspect-ratio:16/9;border:0}
+.sp-vnote{font-size:12.5px;color:#9aa6b5;line-height:1.85;margin-top:12px}
+
+.sp-gallery{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;align-items:start}
+.sp-stage{border-radius:20px;overflow:hidden;background:#0f1826;aspect-ratio:3/4;max-height:62vh;
+  display:flex;align-items:center;justify-content:center}
+.sp-stage img{width:100%;height:100%;object-fit:contain}
+.sp-gallery .thumbs{flex-wrap:wrap;overflow:visible;padding:0}
+.sp-gallery .thumbs img{width:74px;height:74px}
+@media(max-width:820px){
+  .sp-hero-main{flex-direction:column;align-items:flex-start;gap:18px}
+  .sp-gallery{grid-template-columns:1fr}
+  .page-bar{padding:12px 18px}
+  .page-inner{padding:20px 18px 70px}
+  .sp-story{padding:4px 18px 20px}
+}
+</style>
 </head>
 <body>
+<nav class="navbar">
+  <div class="logo"><i class="fas fa-tv"></i><span>童年回忆</span></div>
+  <div class="nav-hint"><i class="fas fa-video"></i> 悬停卡片直接播主题曲视频 · 点击进入子页面</div>
+</nav>
 
-  <header class="site-header">
-    <div class="header-inner">
-      <a class="brand" href="#/">
-        <span class="brand-mark">D</span>
-        <span>Dayword 的技术笔记</span>
-      </a>
+<div id="home">
+<section class="hero">
+  <div class="hero-strips" id="heroStrips"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">童年回忆</h1>
+    <p class="hero-subtitle">那些年我们一起追过的动画片主题曲</p>
+    <div class="hero-tip"><i class="fas fa-hand-pointer"></i> 海报自动滚动 · 悬停停住并试听 · 点一下进子页面 · 按住左键可拖动</div>
+  </div>
+  <div class="hero-marquee" id="marquee"><div class="marquee-track" id="marqueeTrack"></div></div>
+</section>
 
-      <nav class="nav" id="nav">
-        <a class="nav-link" href="#/">首页</a>
-        <a class="nav-link" href="#/posts">文章</a>
-        <a class="nav-link" href="#/tags">标签</a>
-        <a class="nav-link" href="#/about">关于</a>
-      </nav>
+<div class="container">
+  <div class="toolbar">
+    <div class="tabs" id="tabs"></div>
+    <div class="count" id="count"></div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
 
-      <div class="header-actions">
-        <button class="icon-btn" id="themeToggle" type="button" aria-label="切换深色 / 浅色主题">☾</button>
-        <button class="icon-btn nav-toggle" id="navToggle" type="button"
-                aria-label="打开菜单" aria-expanded="false" aria-controls="nav">☰</button>
+<footer class="footer">💝 珍藏童年，回味经典 💝</footer>
+</div>
+
+<!-- ---------- 子页面（每个动画一页，同文件内切换） ---------- -->
+<div class="page" id="subpage">
+  <div class="page-bar">
+    <button class="page-back" id="backBtn"><i class="fas fa-arrow-left"></i> 返回首页</button>
+    <div class="page-crumb" id="crumb"></div>
+  </div>
+  <div class="page-inner">
+    <header class="sp-hero">
+      <img class="sp-bg" id="spBg" src="" alt="">
+      <div class="sp-hero-mask"></div>
+      <div class="sp-hero-main">
+        <div class="sp-poster"><img id="spPoster" src="" alt=""></div>
+        <div class="sp-head">
+          <h1 id="spTitle"></h1>
+          <div class="sp-meta" id="spMeta"></div>
+          <p class="sp-lede" id="spLede"></p>
+          <div class="sp-tags" id="spTags"></div>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <main class="container" id="view">
-    <div class="loading"><span></span><span></span><span></span></div>
-  </main>
+    <section class="sp-sec">
+      <h2 class="sp-h2"><i class="fas fa-clapperboard"></i> 看原片</h2>
+      <div class="sp-vtabs" id="spVtabs"></div>
+      <div class="sp-video-wrap"><iframe id="spVideo" src="" allowfullscreen="true"
+        scrolling="no" frameborder="0" allow="autoplay; fullscreen; encrypted-media"></iframe></div>
+      <p class="sp-vnote" id="spVnote"></p>
+    </section>
 
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <span>© <span id="year">2026</span> Dayword · 共 <span id="postCount">—</span> 篇文章</span>
-      <div class="footer-links">
-        <a href="#/posts">文章</a>
-        <a href="#/tags">标签</a>
-        <a href="#/about">关于</a>
-        <a href="https://github.com/Dayword/blog" target="_blank" rel="noopener">GitHub</a>
+    <section class="sp-sec">
+      <h2 class="sp-h2"><i class="fas fa-music"></i> 主题曲</h2>
+      <div class="player">
+        <div class="player-row">
+          <button class="play-btn" id="playBtn"><i class="fas fa-pause"></i></button>
+          <div>
+            <div class="now-title" id="nowTitle">—</div>
+            <div class="now-artist" id="nowArtist"></div>
+          </div>
+        </div>
+        <div class="playlist" id="playlist"></div>
       </div>
-    </div>
-  </footer>
+    </section>
 
-  <script src="assets/js/markdown.js"></script>
-  <script src="assets/js/store.js"></script>
-  <script src="assets/js/app.js"></script>
+    <section class="sp-sec">
+      <h2 class="sp-h2"><i class="fas fa-book-open"></i> 那些年，我们一起看过</h2>
+      <article class="sp-story" id="spStory"></article>
+    </section>
+
+    <section class="sp-sec">
+      <h2 class="sp-h2"><i class="fas fa-images"></i> 海报墙</h2>
+      <div class="sp-gallery">
+        <div class="sp-stage"><img id="stageImg" src="" alt=""></div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 悬停时塞进卡片封面里的视频播放器（全站共用一个实例，不设 src 就不发请求） -->
+<div id="hoverPark" hidden>
+  <div class="cover-player" id="hoverPlayer">
+    <iframe id="hoverFrame" src="" allowfullscreen="true" scrolling="no" frameborder="0"
+      allow="autoplay; fullscreen; encrypted-media"></iframe>
+  </div>
+</div>
+
+<script>
+const DATA = [{"id": "p01", "title": "葫芦娃", "group": "经典怀旧", "year": "1986", "desc": "七个神奇的葫芦娃为救爷爷，与蛇精、蝎子精斗智斗勇。", "tags": ["经典", "神话", "英雄"], "posters": ["assets/posters/p01/01.jpg?v=d0b85ff9c1", "assets/posters/p01/02.jpg?v=d0b85ff9c1", "assets/posters/p01/03.webp?v=d0b85ff9c1", "assets/posters/p01/04.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p01_1.mp3?v=d0b85ff9c1", "name": "葫芦娃_33", "artist": "三三儿歌"}]}, {"id": "p02", "title": "黑猫警长", "group": "经典怀旧", "year": "1984", "desc": "机智勇敢的黑猫警长带领警士们守护森林的安宁。", "tags": ["侦探", "正义", "经典"], "posters": ["assets/posters/p02/01.jpg?v=d0b85ff9c1", "assets/posters/p02/02.jpg?v=d0b85ff9c1", "assets/posters/p02/03.jpg?v=d0b85ff9c1", "assets/posters/p02/04.jpg?v=d0b85ff9c1", "assets/posters/p02/05.jpg?v=d0b85ff9c1", "assets/posters/p02/06.jpg?v=d0b85ff9c1", "assets/posters/p02/07.jpg?v=d0b85ff9c1", "assets/posters/p02/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p02_1.mp3?v=d0b85ff9c1", "name": "黑猫警长", "artist": "沈小岑"}]}, {"id": "p03", "title": "阿凡提的故事", "group": "经典怀旧", "year": "1979", "desc": "骑着毛驴的阿凡提用智慧戏弄贪婪的巴依老爷。", "tags": ["木偶", "智慧", "幽默"], "posters": ["assets/posters/p03/01.jpg?v=d0b85ff9c1", "assets/posters/p03/02.jpg?v=d0b85ff9c1", "assets/posters/p03/03.jpg?v=d0b85ff9c1", "assets/posters/p03/04.jpg?v=d0b85ff9c1", "assets/posters/p03/05.jpg?v=d0b85ff9c1", "assets/posters/p03/06.jpg?v=d0b85ff9c1", "assets/posters/p03/07.jpg?v=d0b85ff9c1", "assets/posters/p03/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p03_1.mp3?v=d0b85ff9c1", "name": "阿凡提主题曲", "artist": "小樂"}]}, {"id": "p04", "title": "三个和尚", "group": "经典怀旧", "year": "1980", "desc": "一个和尚挑水吃，两个和尚抬水吃，三个和尚没水吃。", "tags": ["美术片", "寓言", "经典"], "posters": ["assets/posters/p04/01.png?v=d0b85ff9c1", "assets/posters/p04/02.jpg?v=d0b85ff9c1", "assets/posters/p04/03.jpg?v=d0b85ff9c1", "assets/posters/p04/04.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p04_1.mp3?v=d0b85ff9c1", "name": "三个和尚", "artist": "甘萍"}]}, {"id": "p05", "title": "蓝猫淘气三千问", "group": "经典怀旧", "year": "1999", "desc": "蓝猫和伙伴们在冒险中解答一个个科学问题。", "tags": ["科普", "冒险", "知识"], "posters": ["assets/posters/p05/01.jpg?v=d0b85ff9c1", "assets/posters/p05/02.jpg?v=d0b85ff9c1", "assets/posters/p05/03.jpg?v=d0b85ff9c1", "assets/posters/p05/04.jpg?v=d0b85ff9c1", "assets/posters/p05/05.jpg?v=d0b85ff9c1", "assets/posters/p05/06.png?v=d0b85ff9c1", "assets/posters/p05/07.jpg?v=d0b85ff9c1", "assets/posters/p05/08.png?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p05_1.mp3?v=d0b85ff9c1", "name": "地厚天高", "artist": "中国少年广播合唱团_张弸"}, {"src": "assets/audio/p05_2.mp3?v=d0b85ff9c1", "name": "地厚天高《蓝猫淘气三千问》主题曲", "artist": "你程哥"}, {"src": "assets/audio/p05_3.mp3?v=d0b85ff9c1", "name": "《蓝猫淘气三千问》主题曲 - 地厚天高（当钢琴遇上提琴）（邓壬鑫 remix）", "artist": "邓壬鑫"}]}, {"id": "p06", "title": "西游记", "group": "经典怀旧", "year": "1999", "desc": "唐僧师徒四人一路降妖除魔，西天取经。", "tags": ["神话", "冒险", "经典"], "posters": ["assets/posters/p06/01.jpg?v=d0b85ff9c1", "assets/posters/p06/02.jpg?v=d0b85ff9c1", "assets/posters/p06/03.jpg?v=d0b85ff9c1", "assets/posters/p06/04.jpg?v=d0b85ff9c1", "assets/posters/p06/05.jpg?v=d0b85ff9c1", "assets/posters/p06/06.jpg?v=d0b85ff9c1", "assets/posters/p06/07.png?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p06_1.mp3?v=d0b85ff9c1", "name": "白龙马", "artist": "贝瓦儿歌"}, {"src": "assets/audio/p06_2.mp3?v=d0b85ff9c1", "name": "《白龙马雨夜静思》男声版，林宝敏词曲，西游记，猪八戒、孙悟空、唐僧、沙僧 伴奏版", "artist": "林宝敏"}]}, {"id": "p07", "title": "哪吒传奇", "group": "经典怀旧", "year": "2003", "desc": "小英雄哪吒从顽童成长为顶天立地的大英雄。", "tags": ["神话", "英雄", "成长"], "posters": ["assets/posters/p07/01.jpg?v=d0b85ff9c1", "assets/posters/p07/02.jpg?v=d0b85ff9c1", "assets/posters/p07/03.png?v=d0b85ff9c1", "assets/posters/p07/04.jpg?v=d0b85ff9c1", "assets/posters/p07/05.png?v=d0b85ff9c1", "assets/posters/p07/06.jpg?v=d0b85ff9c1", "assets/posters/p07/07.jpg?v=d0b85ff9c1", "assets/posters/p07/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p07_1.mp3?v=d0b85ff9c1", "name": "小哪吒", "artist": "兔子水手"}]}, {"id": "p08", "title": "喜羊羊与灰太狼", "group": "国漫少儿", "year": "2005", "desc": "青青草原上，羊羊们与灰太狼夫妇的欢乐对决。", "tags": ["搞笑", "童话", "友情"], "posters": ["assets/posters/p08/01.jpg?v=d0b85ff9c1", "assets/posters/p08/02.jpg?v=d0b85ff9c1", "assets/posters/p08/03.jpg?v=d0b85ff9c1", "assets/posters/p08/04.jpg?v=d0b85ff9c1", "assets/posters/p08/05.jpg?v=d0b85ff9c1", "assets/posters/p08/06.jpg?v=d0b85ff9c1", "assets/posters/p08/07.jpg?v=d0b85ff9c1", "assets/posters/p08/08.png?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p08_1.mp3?v=d0b85ff9c1", "name": "大家一起喜羊羊", "artist": "绯颜"}, {"src": "assets/audio/p08_2.mp3?v=d0b85ff9c1", "name": "别看我只是一只羊", "artist": "Rosalind兔兔"}, {"src": "assets/audio/p08_3.mp3?v=d0b85ff9c1", "name": "喜羊羊主题曲别看我只是一只羊", "artist": "SONY MUSIC"}, {"src": "assets/audio/p08_4.mp3?v=d0b85ff9c1", "name": "左手右手", "artist": "李俊贤"}]}, {"id": "p09", "title": "熊出没", "group": "国漫少儿", "year": "2012", "desc": "熊大、熊二守护森林，与光头强上演爆笑日常。", "tags": ["搞笑", "冒险", "环保"], "posters": ["assets/posters/p09/01.jpg?v=d0b85ff9c1", "assets/posters/p09/02.jpg?v=d0b85ff9c1", "assets/posters/p09/03.webp?v=d0b85ff9c1", "assets/posters/p09/04.jpg?v=d0b85ff9c1", "assets/posters/p09/05.jpg?v=d0b85ff9c1", "assets/posters/p09/06.jpg?v=d0b85ff9c1", "assets/posters/p09/07.jpg?v=d0b85ff9c1", "assets/posters/p09/08.jpg?v=d0b85ff9c1", "assets/posters/p09/09.jpg?v=d0b85ff9c1", "assets/posters/p09/10.webp?v=d0b85ff9c1", "assets/posters/p09/11.webp?v=d0b85ff9c1", "assets/posters/p09/12.webp?v=d0b85ff9c1", "assets/posters/p09/13.jpg?v=d0b85ff9c1", "assets/posters/p09/14.jpg?v=d0b85ff9c1", "assets/posters/p09/15.jpg?v=d0b85ff9c1", "assets/posters/p09/16.png?v=d0b85ff9c1", "assets/posters/p09/17.webp?v=d0b85ff9c1", "assets/posters/p09/18.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p09_1.mp3?v=d0b85ff9c1", "name": "我还有点小糊涂", "artist": "新月奏"}, {"src": "assets/audio/p09_2.mp3?v=d0b85ff9c1", "name": "你从未离去(熊出没)", "artist": "Bernie"}, {"src": "assets/audio/p09_3.mp3?v=d0b85ff9c1", "name": "熊出没-你从未离去（MAPEISEN）", "artist": "MAPEISEN"}, {"src": "assets/audio/p09_4.mp3?v=d0b85ff9c1", "name": "你从未离去", "artist": "高鹏博"}]}, {"id": "p10", "title": "猪猪侠", "group": "国漫少儿", "year": "2005", "desc": "猪猪侠与伙伴们保卫童话世界、惩恶扬善。", "tags": ["冒险", "正义", "童话"], "posters": ["assets/posters/p10/01.jpg?v=d0b85ff9c1", "assets/posters/p10/02.jpg?v=d0b85ff9c1", "assets/posters/p10/03.jpg?v=d0b85ff9c1", "assets/posters/p10/04.jpg?v=d0b85ff9c1", "assets/posters/p10/05.jpg?v=d0b85ff9c1", "assets/posters/p10/06.jpg?v=d0b85ff9c1", "assets/posters/p10/07.jpg?v=d0b85ff9c1", "assets/posters/p10/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p10_1.mp3?v=d0b85ff9c1", "name": "猪猪侠", "artist": "群星"}]}, {"id": "p11", "title": "果宝特攻", "group": "国漫少儿", "year": "2010", "desc": "果宝机甲集结，橙留香三人组展开热血大冒险。", "tags": ["机甲", "热血", "搞笑"], "posters": ["assets/posters/p11/01.jpg?v=d0b85ff9c1", "assets/posters/p11/02.jpg?v=d0b85ff9c1", "assets/posters/p11/03.jpg?v=d0b85ff9c1", "assets/posters/p11/04.png?v=d0b85ff9c1", "assets/posters/p11/05.jpg?v=d0b85ff9c1", "assets/posters/p11/06.jpg?v=d0b85ff9c1", "assets/posters/p11/07.jpg?v=d0b85ff9c1", "assets/posters/p11/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p11_1.mp3?v=d0b85ff9c1", "name": "陈洁丽-疯狂果宝", "artist": "音乐"}, {"src": "assets/audio/p11_2.mp3?v=d0b85ff9c1", "name": "果宝特攻", "artist": "陈洁丽"}]}, {"id": "p12", "title": "京剧猫", "group": "国漫少儿", "year": "2015", "desc": "以京剧武生为原型的猫族，踏上寻找十二宗师的旅程。", "tags": ["国粹", "热血", "冒险"], "posters": ["assets/posters/p12/01.jpg?v=d0b85ff9c1", "assets/posters/p12/02.jpg?v=d0b85ff9c1", "assets/posters/p12/03.jpg?v=d0b85ff9c1", "assets/posters/p12/04.png?v=d0b85ff9c1", "assets/posters/p12/05.jpg?v=d0b85ff9c1", "assets/posters/p12/06.jpg?v=d0b85ff9c1", "assets/posters/p12/07.jpg?v=d0b85ff9c1", "assets/posters/p12/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p12_1.mp3?v=d0b85ff9c1", "name": "京剧猫", "artist": "Packnock"}]}, {"id": "p13", "title": "洛克王国", "group": "国漫少儿", "year": "2011", "desc": "魔法世界里的宠物对战与奇幻冒险。", "tags": ["魔法", "冒险", "宠物"], "posters": ["assets/posters/p13/01.jpg?v=d0b85ff9c1", "assets/posters/p13/02.jpg?v=d0b85ff9c1", "assets/posters/p13/03.jpg?v=d0b85ff9c1", "assets/posters/p13/04.jpg?v=d0b85ff9c1", "assets/posters/p13/05.jpg?v=d0b85ff9c1", "assets/posters/p13/06.jpg?v=d0b85ff9c1", "assets/posters/p13/07.jpg?v=d0b85ff9c1", "assets/posters/p13/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p13_1.mp3?v=d0b85ff9c1", "name": "Sky 洛克王国人鱼湾（商店街）", "artist": "喜子的剃刀"}, {"src": "assets/audio/p13_2.mp3?v=d0b85ff9c1", "name": "洛克王国主题曲梦想前行（Litchi Remix）", "artist": "Litchi"}, {"src": "assets/audio/p13_3.mp3?v=d0b85ff9c1", "name": "魔法城堡", "artist": "三重野chiame"}, {"src": "assets/audio/p13_4.mp3?v=d0b85ff9c1", "name": "洛克王国-人鱼湾【 长笛版】", "artist": "刘一诺noral-flute"}, {"src": "assets/audio/p13_5.mp3?v=d0b85ff9c1", "name": "洛克王国-魔法时刻", "artist": "魏小涵"}]}, {"id": "p14", "title": "赛尔号", "group": "国漫少儿", "year": "2011", "desc": "赛尔机器人携手精灵，探索宇宙守护和平。", "tags": ["科幻", "冒险", "机甲"], "posters": ["assets/posters/p14/01.jpg?v=d0b85ff9c1", "assets/posters/p14/02.jpg?v=d0b85ff9c1", "assets/posters/p14/03.png?v=d0b85ff9c1", "assets/posters/p14/04.jpg?v=d0b85ff9c1", "assets/posters/p14/05.jpg?v=d0b85ff9c1", "assets/posters/p14/06.png?v=d0b85ff9c1", "assets/posters/p14/07.png?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p14_1.mp3?v=d0b85ff9c1", "name": "传奇的赛尔号", "artist": "X-TIME张奕轩"}]}, {"id": "p15", "title": "超级飞侠", "group": "国漫少儿", "year": "2015", "desc": "乐迪与超级飞侠团队环游世界，为小朋友们派送包裹。", "tags": ["益智", "冒险", "友情"], "posters": ["assets/posters/p15/01.jpg?v=d0b85ff9c1", "assets/posters/p15/02.jpg?v=d0b85ff9c1", "assets/posters/p15/03.jpg?v=d0b85ff9c1", "assets/posters/p15/04.jpg?v=d0b85ff9c1", "assets/posters/p15/05.jpg?v=d0b85ff9c1", "assets/posters/p15/06.jpg?v=d0b85ff9c1", "assets/posters/p15/07.jpg?v=d0b85ff9c1", "assets/posters/p15/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p15_1.mp3?v=d0b85ff9c1", "name": "超级飞侠主题曲", "artist": "傅悦天"}]}, {"id": "p16", "title": "巴啦啦小魔仙", "group": "国漫少儿", "year": "2008", "desc": "小魔仙们用魔法守护世界，也守护彼此的友情。", "tags": ["魔法", "少女", "友情"], "posters": ["assets/posters/p16/01.jpg?v=d0b85ff9c1", "assets/posters/p16/02.jpg?v=d0b85ff9c1", "assets/posters/p16/03.webp?v=d0b85ff9c1", "assets/posters/p16/04.png?v=d0b85ff9c1", "assets/posters/p16/05.jpg?v=d0b85ff9c1", "assets/posters/p16/06.jpg?v=d0b85ff9c1", "assets/posters/p16/07.jpg?v=d0b85ff9c1", "assets/posters/p16/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p16_1.mp3?v=d0b85ff9c1", "name": "巴啦啦小魔仙", "artist": "顾倾酒"}]}, {"id": "p17", "title": "开心超人", "group": "国漫少儿", "year": "2010", "desc": "开心超人与伙伴们守护星星球，对抗大大怪。", "tags": ["搞笑", "科幻", "英雄"], "posters": ["assets/posters/p17/01.jpg?v=d0b85ff9c1", "assets/posters/p17/02.jpg?v=d0b85ff9c1", "assets/posters/p17/03.jpg?v=d0b85ff9c1", "assets/posters/p17/04.jpg?v=d0b85ff9c1", "assets/posters/p17/05.png?v=d0b85ff9c1", "assets/posters/p17/06.jpg?v=d0b85ff9c1", "assets/posters/p17/07.png?v=d0b85ff9c1", "assets/posters/p17/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p17_1.mp3?v=d0b85ff9c1", "name": "开心往前飞", "artist": "郁酒"}]}, {"id": "p18", "title": "神兵小将", "group": "国漫少儿", "year": "2007", "desc": "问天携神兵天晶兽，踏上拯救玉龙国的征途。", "tags": ["热血", "冒险", "成长"], "posters": ["assets/posters/p18/01.jpg?v=d0b85ff9c1", "assets/posters/p18/02.jpg?v=d0b85ff9c1", "assets/posters/p18/03.jpg?v=d0b85ff9c1", "assets/posters/p18/04.jpg?v=d0b85ff9c1", "assets/posters/p18/05.jpg?v=d0b85ff9c1", "assets/posters/p18/06.jpg?v=d0b85ff9c1", "assets/posters/p18/07.jpg?v=d0b85ff9c1", "assets/posters/p18/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p18_1.mp3?v=d0b85ff9c1", "name": "梦的光点", "artist": "亭淼"}, {"src": "assets/audio/p18_2.mp3?v=d0b85ff9c1", "name": "梦的光点（粤语版）", "artist": "睡莲"}]}, {"id": "p19", "title": "大耳朵图图", "group": "国漫少儿", "year": "2004", "desc": "爱问为什么的图图，和爸爸妈妈的温馨日常。", "tags": ["温馨", "家庭", "成长"], "posters": ["assets/posters/p19/01.jpg?v=d0b85ff9c1", "assets/posters/p19/02.jpg?v=d0b85ff9c1", "assets/posters/p19/03.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p19_1.mp3?v=d0b85ff9c1", "name": "大耳朵图图（prod by Furyl）", "artist": "胡溪溪2happy"}]}, {"id": "p20", "title": "大头儿子小头爸爸", "group": "国漫少儿", "year": "1995", "desc": "大头儿子一家三口的欢乐日常，温暖又好笑。", "tags": ["温馨", "家庭", "成长"], "posters": ["assets/posters/p20/01.jpg?v=d0b85ff9c1", "assets/posters/p20/02.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p20_1.mp3?v=d0b85ff9c1", "name": "大头儿子小头爸爸", "artist": "陈旭东Dong"}]}, {"id": "p21", "title": "斗罗大陆", "group": "国漫玄幻", "year": "2018", "desc": "唐三携蓝银草武魂，在斗罗大陆一步步走向巅峰。", "tags": ["玄幻", "热血", "成长"], "posters": ["assets/posters/p21/01.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p21_1.mp3?v=d0b85ff9c1", "name": "战歌《斗罗大陆》双神之战主题曲", "artist": "声不可测"}, {"src": "assets/audio/p21_2.mp3?v=d0b85ff9c1", "name": "如云坠海-《斗罗大陆》动画女性群像", "artist": "Momo半夏_事儿精_无夏_月沢奈雪Nayuki_颜糙糙_越塔ttttaa_拂桑_小五沉沉沉"}, {"src": "assets/audio/p21_3.mp3?v=d0b85ff9c1", "name": "一诺此生", "artist": "包达Quinn"}, {"src": "assets/audio/p21_4.mp3?v=d0b85ff9c1", "name": "风舞《斗罗大陆片尾曲》（Cover：Movement Music Productions）", "artist": "安鸣侨"}]}, {"id": "p22", "title": "斗破苍穹", "group": "国漫玄幻", "year": "2017", "desc": "天才少年萧炎跌落尘埃，再起之时焚尽苍穹。", "tags": ["玄幻", "热血", "逆袭"], "posters": ["assets/posters/p22/01.jpg?v=d0b85ff9c1", "assets/posters/p22/02.jpg?v=d0b85ff9c1", "assets/posters/p22/03.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p22_1.mp3?v=d0b85ff9c1", "name": "重生《斗破苍穹》主题曲", "artist": "周深"}, {"src": "assets/audio/p22_2.mp3?v=d0b85ff9c1", "name": "从别后《斗破苍穹特别篇》动画", "artist": "汽水"}, {"src": "assets/audio/p22_3.mp3?v=d0b85ff9c1", "name": "趁年少《斗破苍穹第三季》动画片头曲", "artist": "汽水"}, {"src": "assets/audio/p22_4.mp3?v=d0b85ff9c1", "name": "少年泪《斗破苍穹》动画第四季片头曲", "artist": "风倾"}, {"src": "assets/audio/p22_5.mp3?v=d0b85ff9c1", "name": "斗破苍穹_主题歌_大陆之巅", "artist": "魏小涵"}]}, {"id": "p23", "title": "秦时明月", "group": "国漫玄幻", "year": "2007", "desc": "荆天明与盖聂穿行乱世，剑光里藏着家国天下。", "tags": ["武侠", "历史", "国风"], "posters": ["assets/posters/p23/01.jpg?v=d0b85ff9c1", "assets/posters/p23/02.jpg?v=d0b85ff9c1", "assets/posters/p23/03.jpg?v=d0b85ff9c1", "assets/posters/p23/04.jpg?v=d0b85ff9c1", "assets/posters/p23/05.jpg?v=d0b85ff9c1", "assets/posters/p23/06.jpg?v=d0b85ff9c1", "assets/posters/p23/07.jpg?v=d0b85ff9c1", "assets/posters/p23/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p23_1.mp3?v=d0b85ff9c1", "name": "【月光】古筝（纯筝）秦时明月（翻自 胡彦斌）", "artist": "崔江卉"}]}, {"id": "p24", "title": "画江湖之不良人", "group": "国漫玄幻", "year": "2014", "desc": "李星云身负龙泉宝藏之秘，卷入江湖与庙堂之争。", "tags": ["武侠", "国风", "权谋"], "posters": ["assets/posters/p24/01.jpg?v=d0b85ff9c1", "assets/posters/p24/02.jpg?v=d0b85ff9c1", "assets/posters/p24/03.jpg?v=d0b85ff9c1", "assets/posters/p24/04.webp?v=d0b85ff9c1", "assets/posters/p24/05.webp?v=d0b85ff9c1", "assets/posters/p24/06.jpg?v=d0b85ff9c1", "assets/posters/p24/07.jpg?v=d0b85ff9c1", "assets/posters/p24/08.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p24_1.mp3?v=d0b85ff9c1", "name": "原点-——大型成人动画不良人主题曲(Cover)", "artist": "凌之轩"}]}, {"id": "p25", "title": "大鱼海棠", "group": "动画电影·特摄", "year": "2016", "desc": "湫、椿与鲲，一场关于爱与牺牲的东方奇幻。", "tags": ["电影", "国风", "奇幻"], "posters": ["assets/posters/p25/01.webp?v=d0b85ff9c1", "assets/posters/p25/02.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p25_1.mp3?v=d0b85ff9c1", "name": "大鱼古筝版（Cover 周深）", "artist": "清浅"}]}, {"id": "p26", "title": "哪吒之魔童闹海", "group": "动画电影·特摄", "year": "2025", "desc": "哪吒与敖丙的宿命再燃，闹海一战撼动天地。", "tags": ["电影", "神话", "热血"], "posters": ["assets/posters/p26/01.jpg?v=d0b85ff9c1", "assets/posters/p26/02.jpg?v=d0b85ff9c1", "assets/posters/p26/03.webp?v=d0b85ff9c1", "assets/posters/p26/04.webp?v=d0b85ff9c1", "assets/posters/p26/05.webp?v=d0b85ff9c1", "assets/posters/p26/06.jpg?v=d0b85ff9c1", "assets/posters/p26/07.webp?v=d0b85ff9c1", "assets/posters/p26/08.webp?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p26_1.mp3?v=d0b85ff9c1", "name": "就是哪吒 (《哪吒之魔童闹海》电影角色曲)", "artist": "鱼青辞"}]}, {"id": "p27", "title": "哪吒之魔童降世", "group": "动画电影·特摄", "year": "2019", "desc": "我命由我不由天，魔童哪吒逆天改命的燃与泪。", "tags": ["电影", "神话", "热血"], "posters": ["assets/posters/p27/01.webp?v=d0b85ff9c1", "assets/posters/p27/02.jpg?v=d0b85ff9c1", "assets/posters/p27/03.jpg?v=d0b85ff9c1", "assets/posters/p27/04.jpg?v=d0b85ff9c1", "assets/posters/p27/05.jpg?v=d0b85ff9c1", "assets/posters/p27/06.jpg?v=d0b85ff9c1", "assets/posters/p27/07.jpg?v=d0b85ff9c1", "assets/posters/p27/08.webp?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p27_1.mp3?v=d0b85ff9c1", "name": "(正太版)《哪吒之魔童降世》（翻自 GAI＆大痒痒）", "artist": "井溪辰"}, {"src": "assets/audio/p27_2.mp3?v=d0b85ff9c1", "name": "今后我与自己流浪（烟嗓小哪吒吕艳婷版本）", "artist": "吕艳婷"}, {"src": "assets/audio/p27_3.mp3?v=d0b85ff9c1", "name": "「哪吒」哪吒之魔童降世 主题曲（翻自 GAI周延）", "artist": "吹笛人SIsi"}, {"src": "assets/audio/p27_4.mp3?v=d0b85ff9c1", "name": "今后我与自己流浪《哪吒之魔童降世》", "artist": "忆嘟嘟"}]}, {"id": "p28", "title": "迪迦奥特曼", "group": "动画电影·特摄", "year": "1996", "desc": "光之巨人迪迦，与人类一起守护地球。", "tags": ["特摄", "英雄", "科幻"], "posters": ["assets/posters/p28/01.jpg?v=d0b85ff9c1"], "songs": [{"src": "assets/audio/p28_1.mp3?v=d0b85ff9c1", "name": "奇迹再现(迪迦奥特曼)", "artist": "曹翟_Dreamon乐队（橘猫乐队）_Blue Dino"}, {"src": "assets/audio/p28_2.mp3?v=d0b85ff9c1", "name": "奇迹再现 迪迦奥特曼（钢琴演奏）", "artist": "薛湘灵"}, {"src": "assets/audio/p28_3.mp3?v=d0b85ff9c1", "name": "毛华锋 - 奇迹再现-迪迦奥特曼", "artist": "觉醒之心"}]}];
+const STORY = {"p01": {"lede": "“葫芦娃，葫芦娃，一根藤上七朵花。” —— 这七个字一响，很多人脑子里会自动接上下半句，连调子都是对的。", "sections": [{"h": "守着电视的那半个钟头", "ps": ["那是个频道没几个、节目表靠记的年代。放学冲回家，书包往沙发上一扔，小板凳往电视机前一摆 —— 就为了赶上片头曲。前奏一起，屋里那几个闹腾的小孩会突然安静下来，因为谁也不想错过第一句。", "然后就到了那个名场面：小娃娃从葫芦里蹦出来，冲着山那边喊一声“爷爷——”。我们跟着学，把双手举过头顶比划葫芦，课间争论的内容永远是“大娃最厉害还是六娃最厉害”——力气派和隐身派，从来没吵出过结果。", "还有蛇精那面能看得很远的如意镜、蝎子精、替爷爷挡刀的穿山甲，以及最后一集七个娃连成一条心的那个镜头。那时候不懂什么叫“团结”，只知道心里“咚”地一下，挺解气。"]}, {"h": "它其实是被“设计”出来的", "ps": ["1985 年，上海美术电影制片厂决定做一批系列美术片。编剧杨玉良先从民间故事《十兄弟》里写出一个提纲 —— 十个各怀神通的兄弟。这个“神通 + 个性”的设定让导演胡进庆眼前一亮：他想要的不是温吞的童话，而是一组“打得响”的硬汉英雄。", "于是剧本被大改：原始故事的环境在宫廷，反派是官僚大臣；导演组把它挪到深山峻岭，反派变成蛇精和蝎子精。理由很实在 —— 既有戏，又省成本，还特别适合剪纸片这种工艺和小孩的欣赏习惯。七个娃除了衣服和头顶葫芦的颜色，长得一模一样：制作方便，孩子也分得清。"]}, {"h": "一格一格拍出来的两年", "ps": ["《葫芦兄弟》是中国第一部剪纸动画系列片，13 集，从 1986 年拍到了 1987 年。剪纸片像皮影戏：把人剪成带活动关节的纸片，在大背景上摆出一个个动作，然后一格一格拍下来。13 集，几千个场景，全靠手工摆出来。", "为了找场景，摄制组跑到浙江和江苏宜兴的溶洞里写生。在善卷洞里转了一圈之后，胡进庆拍板把反派改成蛇精和蝎子精 —— 因为洞里正好可以有宝石、翡翠、玛瑙这些好看的石头造型。", "整部片子 2000 多个镜头，平均每本约 160 个；特技镜头 500 多个，占了全片四分之一；200 多个场景里有 80 场是机关布景。导演组还用“过四关、斩三将”的节奏写故事 —— 一场戏刚让你喘口气，下一场紧张感又扑过来。这种密度，在以前的剪纸片里是没有的。"]}, {"h": "七个娃，深色皮肤、赤着脚", "ps": ["造型设计吴云初和胡进庆想做出一个“有点野”又带民族风格的形象。他们先参考了善财童子，又赶上那时美影厂引入了复印机 —— 可以先用墨线勾勒，复印后再上色、剪刻成纸偶。于是他们大胆用单线勾勒轮廓，做出一批带赛璐珞味道的造型：深色皮肤、头顶葫芦和葫芦叶、衣服开襟敞着胸腹、打着赤脚。", "据说剧组还向组外“悬赏”好点子。胡进庆的说法很直白：一部短片中如果有十七八个好噱头，冲击力和艺术质量都会有意想不到的收获 —— 这笔钱花得值。"]}, {"h": "一首歌，一台电子琴", "ps": ["全片的音乐出自作曲家吴应炬之手，而据说他只靠一台电子琴就完成了所有音乐设计。那首谁都哼得出的主题曲《葫芦娃》，吴应炬作曲、姚忠礼作词，由上海市少年宫合唱队演唱，上海电影乐团演奏。", "“叮当当咚咚当当”这段拟声词，当年没人在意它是什么，现在才发现它比歌词更容易记。很多“葫芦丝”后来干脆把这首歌设成了铃声。"]}, {"h": "后来它变成了什么", "ps": ["1988 年，《葫芦兄弟》拿下中国广播电影电视部 1986—1987 年优秀影片奖优秀美术片；之后又陆续得了童牛奖系列片奖、首届中国影视动画节目展播三等奖、埃及开罗国际儿童电影节三等奖。", "1989 到 1991 年，原班人马做了 6 集续集《葫芦小金刚》。再往后有 2008 年的电影版、2016 年的《新葫芦兄弟》，还有漫画和各种同人。美影厂动画音像制品每年卖出两千万套左右，其中《葫芦兄弟》一款就占了总量的 18%。", "2019 年 5 月 13 日，“葫芦娃之父”胡进庆去世，享年 83 岁。很多人那几天又重新看了一遍第一集 —— 才发现自己连分镜都还记得。"]}, {"h": "现在再看", "ps": ["今天回头看，它的画面不算精致，特效也不华丽，剪纸的接缝甚至看得见。但“一根藤上七朵花”讲的其实是个很朴素的事：七个人一条心，才打得过难关。当年我们只顾着喊“爷爷”，长大以后才明白那句话的分量。", "所以这个页面留下的不只是 13 集动画，还有当年那个坐在小板凳上、听到前奏就安静下来的自己。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1QgeP6DEo7", "page": 1, "label": "【葫芦娃】全2季 4K超清修复无删减（19 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1y8411P7aK", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p02": {"lede": "“眼睛瞪得像铜铃，射出闪电般的精明。” —— 中国动画里少有的、一出场就自带悬疑片气质的警匪故事。", "sections": [{"h": "那是我们第一次看“破案”", "ps": ["《黑猫警长》和别的小时候看的动画不一样：它一集一个案子。森林里出了事，黑猫警长带着摩托车队出发，白鸽探长去侦察，证据、线索、追捕、真相 —— 一套流程走完，最后那声“啊哈”，案子结了。", "小时候最怕的不是反派，是每集结尾那个“请看下集”。而白鸽探长牺牲的那一集，大概是很多人人生里第一次为一部动画片掉眼泪；也是从那时候知道，故事里的人是会死的。"]}, {"h": "本来有第六集，但它没来", "ps": ["这部片子改编自诸志祥的童话《黑猫警长》，由上海美术电影制片厂出品，戴铁郎担任导演。1984 年先播出了前两集，一共只做了 5 集，1987 年播完。", "第 5 集的最后，照例打出了“请看下集”，然后 —— 就没有下集了。后来的说法是创作和排片都遇到了波折，片子就这么停在那里。几十年里，“为什么没有第六集”一直是国产动画最常被提起的遗憾之一。"]}, {"h": "一只耳和它的耳朵", "ps": ["反派里最出名的是一只耳 —— 名字就来自它少掉的那只耳朵，而少掉的那只，正是黑猫警长打的。这个命名方式特别“小孩”：不用记名字，看一眼就记住了。", "还有吃猫鼠、流氓、强盗，这些词都是从这部片子里第一次听说的。它其实是很正经地在讲“违法要被抓”这件事，只是讲得比教科书好看太多。"]}, {"h": "那首歌，词曲都是同一个人", "ps": ["主题歌《啊哈！黑猫警长》由蔡璐创作词曲，“啊哈，黑猫警长”这一句几乎是全国统一的童年暗号。", "配合画面的，是当年听起来非常“洋气”的电子音色和摩托车引擎声。在还靠收音机听歌的年代，这段音乐一响，就知道该坐定了。"]}, {"h": "它后来长什么样", "ps": ["1993 年美影厂出过续篇，后来又有《新黑猫警长》系列和 3D 版本，2010 年前后还有过电影。但对很多人来说，“黑猫警长”这四个字只对应那 5 集、那身白手套和那副墨镜。", "2019 年前后，“黑猫警长”重新在各种短视频和表情包里流行起来，新一代人是先认识那个“啊哈”，才回头去找动画的。"]}, {"h": "现在再看", "ps": ["重看会发现它其实很“成年”：节奏快、剪辑干脆、反派有智商，该有的牺牲一点不回避。它不是把孩子当傻子哄的那种动画。", "那支摩托车队开出去的画面，到现在还是很多人心里“执法者”这个概念的原始画面。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1zB4y1v7Jz", "page": 1, "label": "【4K修复】黑猫警长 (1984) 5集全【上美】（5 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1qK4y1Z73a", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p03": {"lede": "一头倒骑的小毛驴，一顶缠头，一撮山羊胡 —— 一个专门替穷人收拾财主的老头。", "sections": [{"h": "他不是“英雄”，他是个聪明人", "ps": ["《阿凡提的故事》里没有打斗，也没有神通。阿凡提的全部武器，就是脑子。巴依老爷（财主）想占便宜，他就用更绕的圈套还回去；欺负穷人的规矩，他就照规矩把对方绕进去。", "小时候看得很爽：坏人被耍得团团转，还没有暴力。长大才反应过来，它其实一直在讲一个很硬的事 —— 弱者手里能用的资源，往往只剩下智慧。"]}, {"h": "这不是“编”出来的，是流传出来的", "ps": ["阿凡提（纳斯尔丁·阿凡提）是流传于中亚、西亚和我国新疆一带的民间智者形象，几百年来有很多版本的故事。1979 年起，上海美术电影制片厂把这些故事做成木偶动画，一共 13 集。", "它用的是木偶片工艺：角色是立体木偶，一场戏拍完，演员要一帧一帧地摆姿势。毛驴、集市、清真寺的穹顶、沙漠的颜色 —— 场景来自真实的风土，所以哪怕故事是夸张的，画面也没有一点“塑料味”。"]}, {"h": "小毛驴是反着骑的", "ps": ["倒骑毛驴是阿凡提最标志的动作。这个细节本身就带着态度：你们往前走，我偏要往后看；你们觉得理所当然的事，我偏要翻过来问一句。", "片头曲《人人都叫我阿凡提》几乎是“剧情预告”：唱的就是这个老头是谁、他打算干什么。"]}, {"h": "那些让人拍大腿的桥段", "ps": ["把树荫“卖”给巴依老爷（《卖树荫》）、让财主自己跳进坑里、用一句话把贪心的官司翻过来 —— 每个故事最后都会有一个漂亮的“回旋镖”，前面埋的伏笔啪地一下打回来。", "这种结构其实很像现在的短剧：设局、铺垫、反转。只是它没有一句废话，一集十几分钟，讲得干干净净。"]}, {"h": "现在再看", "ps": ["重看时最打动人的不是那些机灵，是阿凡提对穷人的那种平常态度 ——他从不居高临下，也不许诺奇迹，只是顺手帮你把被人拿走的那点东西要回来。", "在“聪明”常常被用来占便宜的今天，这部片子讲的其实是聪明应该站在哪一边。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1GHu96cEsp", "page": 1, "label": "童年经典动画片《阿凡提的故事》全集无广告、《阿凡提的故事》共14集、1卖树荫（14 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1o441117ze", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p04": {"lede": "一部没有一句台词、只有 20 分钟的动画，把一句老话讲成了一部至今没人超越的短片。", "sections": [{"h": "一个和尚挑水吃，两个和尚抬水吃，三个和尚没水吃", "ps": ["故事极其简单：一个小和尚独自挑水，日子过得挺好；来了第二个和尚，两个人开始计较谁挑得多；再来了第三个，三个人谁都不肯动，最后水缸干了。直到老鼠打翻烛台，庙里着了火，三个人才一起下山救火。", "全片一句对白都没有。所有情绪，全靠动作、节奏和一顶一顶的帽子来演。小时候看笑，长大看冒冷汗 —— 因为它说的根本不是和尚。"]}, {"h": "它是被“算”出来的", "ps": ["《三个和尚》1980 年由上海美术电影制片厂出品，导演阿达（徐景达），编剧包蕾，改编自民间谚语。", "阿达做事是出了名的“抠细节”：人物造型被简化成几条线，颜色只用有限的几种，连节奏都按音乐来卡。据说为了让人物动得有喜剧感，动作被反复拆解重做 ——严丝合缝到你能感觉到“这里就该这样”。"]}, {"h": "头发越长，人心越散", "ps": ["片子里有个特别妙的细节：小和尚刚来时脑袋是光的，随着故事推进，三个人的头发越长越长。头发一长，人就开始懒、开始计较。", "还有那个小水桶，和三个人各背一截的扁担 ——道具本身就是台词：抬水那一段，两个人恨不得把水桶拴在自己这边的比例，比任何争吵都说明问题。"]}, {"h": "没有台词的“喜剧节奏”", "ps": ["这部片子被反复提到的，是它把喜剧和音乐卡得出奇地准。走路、打水、转身、摔倒，都踩在板眼上。所以哪怕听不懂任何一种语言，也能看懂它在演什么。", "这也是它能在国际上被接受的原因：它把“滑稽”做成了一种不需要翻译的东西。"]}, {"h": "现在再看", "ps": ["《三个和尚》拿过第 1 届中国电影金鸡奖最佳美术片奖，也在国际电影节上获过奖。40 多年过去，它还是国产短片里最常被老师放给学生看的那一部。", "它讲的道理一点都不新鲜：协作。但它难得的地方在于 —— 它没有让任何人站出来说这句话。最后水缸满了，火灭了，三个人的头又光溜溜的，故事就结束了。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1GdTTzCEDD", "page": 1, "label": "上美动画4k修复 - 三个和尚1980（30 分钟）", "note": "正片/合集，播放器左上角可切换分 P"}]}, "p05": {"lede": "它看起来是动画片，实际上是我们那几年最常见的一种“被允许看电视”的理由。", "sections": [{"h": "一边看动画，一边就学到了", "ps": ["1999 年，《蓝猫淘气三千问》开播。它打出的旗号是“科普动画”：恐龙为什么灭绝、宇宙里有什么、人体的血是怎么流的、风是怎么形成的 ——每一集都要回答一个问题。", "所以它在家里特别好通过审查：家长觉得这是学习，孩子觉得这是动画，两边都满意，于是它可以在地方台反复播、放学时段反复放。"]}, {"h": "蓝猫、淘气、菲菲、咖喱", "ps": ["主角是蓝猫，还有淘气、菲菲、咖喱这几个伙伴。故事往往从一个“十万个为什么”式的疑问开始，然后一群人（一群动物）要么穿越，要么进机器，要么直接跑去现场，把答案演给你看。", "这种“角色 + 问题 + 冒险”的模板，是当年国产电视动画最实用的一套办法：成本可控、可以无限续写、每一集都能独立看懂。"]}, {"h": "它其实是个巨型工程", "ps": ["“三千问”不是夸张 —— 蓝猫系列后来的总集数确实做到了数千集，还衍生出《太空历险记》《恐龙时代》《星际大战》等一堆子系列，以及图书、玩具、服装等周边。2000 年代中期，它几乎是中国最赚钱的动画 IP 之一。", "代价是产能：为了维持更新，制作量被拉到极限。后来这家公司也卷入了版权和经营的麻烦，蓝猫慢慢从电视上退了出去。"]}, {"h": "“地厚天高”", "ps": ["主题曲《地厚天高》是很多人的记忆锚点 ——“地有多厚，天有多高”这一问，配合片头里那几只动物往远处跑的画面，一听就回到下午五点多。", "有意思的是，很多人记得这首歌，却记不清任何一集的剧情。这大概就是“陪伴型动画”的特点：它的内容被忘掉了，但那个时间段、那种心情留了下来。"]}, {"h": "现在再看", "ps": ["重看会发现它的画质和叙事在今天确实有点简陋，但它的定位很难被替代：它是国产动画第一次把“知识”当成主线来做，而且一做就是几千集。", "对很多人来说，蓝猫不是一个角色，是那几年“写完作业就能看”的那个奖励。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1yx411V7dU", "page": 1, "label": "【合集】蓝猫淘气3000问 太空历险记（400 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1mE41187KP", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p06": {"lede": "“白龙马，蹄朝西，驮着唐三藏跟着仨徒弟。” ——这首歌唱的是取经路，也是 1999 年那版动画片最锋利的记忆。", "sections": [{"h": "第一部长篇电视动画《西游记》", "ps": ["1999 年，央视动画部推出了 52 集动画片《西游记》，这是国内第一次把《西游记》完整地做成系列电视动画。它一播就是很多年，假期一到就能在电视上再遇到一次。", "对很多人来说，这才是他们的“第一个孙悟空”——不是六小龄童，也不是后来的各种电影版，而是一只脸上带着红心、说话干脆、打起来特别利索的猴子。"]}, {"h": "片头曲和片尾曲，两首都能背", "ps": ["片头曲《白龙马》，片尾曲《一个师傅仨徒弟》（就是那首“白龙马蹄朝西”的“兄弟版”），两首都是国民级的传唱度。当年小孩比谁唱得准，其实是比谁看得多。", "配乐里大量的民族乐器加上当时很新鲜的电子音效，把“腾云驾雾”做成了听觉上的标准答案 —— 以后再看别的西游，脑子里响的还是这一段。"]}, {"h": "52 集怎么装下一部《西游记》", "ps": ["52 集的容量，意味着它必须取舍：大闹天宫、三打白骨精、真假美猴王、火焰山这些必留，牛魔王、玉兔精这些支线也要有戏。每一集结构尽量自成一段，让你哪怕漏看两集也能接上。", "这种“单元剧 + 隐藏主线”的写法，后来成了国产长篇动画最常用的结构。"]}, {"h": "它在当年的位置", "ps": ["那几年国产电视动画正在从“短片”走向“长篇系列”。《西游记》是这一轮里做得最扎实的一部：美术偏传统、故事不魔改、节奏按电视来。", "它也因此成了一个标准：之后不管哪版西游动画出来，大家的第一反应都是“跟 99 版比，怎么样”。"]}, {"h": "现在再看", "ps": ["重看会发现它的画面比不上后来的技术，但它的“普通话标准”和“故事讲清楚”这两件事，一直没过时。它讲的是取经，其实也是四个人（加一匹马）在路上慢慢磨合成一个队伍的过程 ——小时候只看孙悟空打妖怪，长大才看见唐僧的固执、八戒的软、沙僧的沉默。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1He4y1p74h", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p07": {"lede": "“是他，是他，就是他，我们的英雄小哪吒。” ——一句歌词，几乎不用唱完，全国小孩就能接上。", "sections": [{"h": "2003 年的那条街", "ps": ["2003 年，52 集动画《哪吒传奇》在央视播出，很快成了那两年最热的一部国产动画。放学回家开电视，片头那个踩着风火轮冲出来的身影，是很多人的固定期待。", "它的故事跨度很大：从哪吒出生，一直讲到助周伐纣、封神榜上留名。中间夹着小龙女、小猪熊这些伙伴，也夹着石矶娘娘、妲己、纣王、申公豹这些反派。"]}, {"h": "孙楠唱的那首歌", "ps": ["主题曲《小哪吒》由孙楠演唱。孙楠的声音又亮又冲，配上“是他，是他，就是他”，几乎是为电视动画量身定做的“上头”。", "当年小孩的玩法是：听到这一句，赶紧跟着喊。喊完那句，才算正式开始看。"]}, {"h": "小哪吒为什么比别的“英雄”更近", "ps": ["他不是一个天生完美的神。刚出生就被当成妖怪，小时候闯祸、被误解、出走过，甚至死过一次。他的成长史里有明显的“代价”两个字 —— 这对当年看片的小孩来说，其实是很重的东西。", "小龙女和他那种不太会说话、但一直站在你这边的关系，也是很多人第一次在动画里看到“朋友”该是什么样。"]}, {"h": "一个孩子的“封神”", "ps": ["比起《西游记》的取经队伍，《哪吒传奇》更像一个人的成长线：被误解、被迫承担、然后长成一个能扛事的人。片子里那句关于命运的态度，后来在各种改编里被反复提起，而它的源头，很多人是从这一版认识的。", "能把这么大的神话体系塞进 52 集给孩子看，本身就不容易。"]}, {"h": "现在再看", "ps": ["后来的《哪吒之魔童降世》《哪吒之魔童闹海》把哪吒重新点燃了一次，但如果你是从 2003 年过来的，心里那个哪吒大概还是圆脸、有点倔、踩着一对风火轮的小子。", "“是他，是他，就是他”—— 这句歌词之所以记得牢，可能因为它本来就是一句问句的答案：谁是我们心里的英雄。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1g4411u74A", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p08": {"lede": "“我还会回来的！” —— 这句话喊了二十年，狼还在喊，羊还在跑。", "sections": [{"h": "每天下午五点半的那一群羊", "ps": ["2005 年开播的《喜羊羊与灰太狼》几乎定义了一个时代的放学时段。喜羊羊聪明，懒羊羊贪睡，美羊羊爱美，沸羊羊横冲直撞，慢羊羊走路都要拄拐，暖羊羊是所有人的大靠山。", "狼那边更有意思：灰太狼永远在造新机器、永远在被打飞，而红太狼永远举着平底锅等在家门口。小孩看的是羊，长大以后才发现，全片最惨的其实是那只狼 ——打不到羊，回家还得挨锅。"]}, {"h": "它是一台机器，转了很多年", "ps": ["这部动画出自广东原创动力，导演黄伟明。它一上马就是“长跑”的姿态：单元剧、结构清晰、几乎每集都能单独看懂。十几季、上千集，加上每年一部的贺岁大电影，让它成了中国电视上出现频率最高的动画之一。", "大量重复但有效的笑点（打飞、翻滚、锅砸），让它对“随时打开电视从中间看”的观看方式极其友好 ——这正是当年电视动画的生存方式。"]}, {"h": "主题曲比剧情更长寿", "ps": ["《别看我只是一只羊》是那种一听前奏就知道要开始了的歌。它的歌词讲的其实是“我虽然小，但我不弱”—— 当年只觉得热闹，现在听会发现它很像一句送给小孩的话。", "很多年后，这首歌被反复改编、翻唱，在各种怀旧合集里出现，播放量一直不低。"]}, {"h": "它也挨过批", "ps": ["2013 年，有儿童模仿片中情节发生意外，引发了对这部动画的公开讨论，之后片方在片中加入安全提示。这是国产少儿动画第一次大面积面对“内容责任”这个议题。", "之后这部片子的走向也在调整：从年年一部贺岁电影，到后来做起了体育、科幻等题材，主角们的世界慢慢“长大”了，而当年看它的那些孩子也已经不坐在电视机前了。"]}, {"h": "现在再看", "ps": ["重看会发现它的动画质量很朴素，笑点也很直白。但它准确地接住了那个年代的孩子：节奏快、人物一眼分得清、不用从第一集开始看也能笑出声。", "还有那句“我还会回来的”—— 现在更像一句关于童年的话：它们其实一直会回来。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV16BeB68EJn", "page": 1, "label": "【合集】喜羊羊与灰太狼之遨游神秘洋（62 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV13f4y1B7rg", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p09": {"lede": "光头强扛着电锯进森林，熊大熊二把他赶出去 ——一个追一个逃，追了十多年，追成了春节档的固定节目。", "sections": [{"h": "从“拆家”到“护林”", "ps": ["2012 年，《熊出没》在电视上开播。早期设定非常直接：光头强是伐木工，熊大熊二是森林的守卫，一方想砍树，一方不让砍，来来回回打闹。", "小孩最上瘾的就是光头强那些“发明” ——小时候看是看笑话，长大以后看，有一集他突然讲起自己想家、讲生活不容易，那一下很多人心里是咯噔的。"]}, {"h": "两首一听就想哭的歌", "ps": ["电视版的主题曲《我还有点小糊涂》唱的是“长大了才知道”。而电影《雪岭熊风》的《你从未离去》是另一条线 ——很多当年看片的小孩，是在这首歌里第一次正经地面对“告别”这件事。", "熊出没的音乐一直比它的剧情更加出圈：几首曲子至今在各种怀旧歌单里循环。"]}, {"h": "为什么它成了春节档常客", "ps": ["2013 年起，《熊出没》开始每年做一部大电影，从最早的贺岁短片一路做到技术成熟的三维动画长片，题材从森林冒险扩展到原始时代、狂野大陆、甚至时间与记忆的科幻设定。", "十几年下来，它成了中国电影市场上最稳定的动画系列之一：每年春节，总有一批父母带着孩子进影院。很多孩子是从“被带着去看”变成了“自己想去”。"]}, {"h": "光头强后来不那么坏了", "ps": ["随着系列推进，光头强从一个纯粹的“反派”变成了半个伙伴。砍树这件事被淡化了，取而代之的是一起解决问题的冒险。这个转向让系列走得更远，也让它更适合全家一起看。", "早期的暴力争议和后来的调整，其实也是国产少儿动画共同经历的一课。"]}, {"h": "现在再看", "ps": ["它讲的东西其实很朴素：森林要保住，伙伴不能丢。只是它用最吵、最闹的方式讲了很多年，吵到了现在的孩子也认得那两头熊。", "“我还有点小糊涂”—— 现在听这句，大概很多已经长大的人，会比小时候更懂它在说什么。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1M8aE67ExF", "page": 1, "label": "【熊出没探险日记】第一季 52集全 4k中字未删减（52 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1zu4y1w7Up", "page": 1, "label": "初代片头曲《我还有点小糊涂》", "note": "主题曲片段，想听歌就切这个"}]}, "p10": {"lede": "一个戴着面罩、披着红披风的小猪，最早的设定里，他就是个想做英雄的普通人。", "sections": [{"h": "一开始，英雄是件挺狼狈的事", "ps": ["2006 年，《猪猪侠》开播。那时的猪猪侠不是超能力者：戴上自制的面罩和披风，就觉得自己是英雄了，然后一次次被现实打得灰头土脸，再爬起来。", "小时候看的是他和超人强、波比、小呆呆那帮人的打闹和比赛，长大以后回想，会发现这其实是个“普通孩子想做大事”的故事，一点也不遮掩主人公会失败。"]}, {"h": "它一直在换壳", "ps": ["《猪猪侠》是那种“活着会变形”的 IP：从最早的搞笑单元剧，到后来的竞速、深海、机甲等各种系列，主角团不断进入新设定，名字后面总是跟着一个新副标题。", "这背后是国产少儿动画的现实：一部片子要活下去，就得不断长出新题材，去接住新一代的小孩。"]}, {"h": "主题曲比人设更牢", "ps": ["《猪猪侠》的主题曲是那种“听一遍就跟着哼”的类型，配合片头里那个红披风的背影，几乎成了这部动画的身份证。", "它的画面在当年看已经很“草”，但那个“我就是要做英雄”的姿态特别清楚，所以很多年后大家还是记得那个穿披风的小猪。"]}, {"h": "现在再看", "ps": ["它的动画质量放在今天看确实谈不上精致，但它对“普通人的英雄梦”这件事的态度一直没变：先失败，再爬起来，然后再失败。", "如果你小时候看到的是打打闹闹，现在回头看，会看到一点特别实在的东西 ——英雄不是天生的，是硬着头皮做出来的。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1MBmUBBEhw", "page": 1, "label": "【超清修复】猪猪侠之五灵守卫者（52 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1Z4411k7j3", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p11": {"lede": "一群水果练武术，还开着机甲去打擂台 ——没人解释过为什么，但当年所有人都接受了这个设定。", "sections": [{"h": "橙色的、菠萝味的、还有个爱睡觉的", "ps": ["《果宝特攻》的角色是按水果来的：橙留香（橙子）、菠萝吹雪（菠萝）、陆小果（苹果）、梨花诗……一群水果住在一个水果世界里，学武功、比门派、遇到事就把身体变成机甲。", "它是那种彻底不讲道理的动画：正剧的框架、无厘头的节奏、随时会冒出来的梗。小时候笑到拍大腿，很多年后还会突然想起某个桥段。"]}, {"h": "武侠 + 机甲 + 段子", "ps": ["这部片子由广州蓝弧文化制作，导演王巍。它把三件本来不搭的东西捏在了一起：门派、比武、师兄弟的江湖关系；一喊口号就变身的机甲；以及大量面向小孩、但成年人也能听出弦外之音的玩笑。", "更妙的是它的“谐音梗”密度：角色名字本身就是梗，这套玩法后来在国产动画里被反复模仿。"]}, {"h": "《疯狂果宝》", "ps": ["主题曲《疯狂果宝》是这部片子的另一张脸：绕口令一样的歌词、特别快的节奏，听一次很难完整唱下来，但每个人都会哼一句。", "这部片子前后做过好几季，每一季的主题曲都有版本差异，但“疯狂”两个字一直没变。"]}, {"h": "现在再看", "ps": ["它是那种“不装”的动画：不试图教育你，只想让你在下课之后笑一场。也正因为没有负担，它在很多人的记忆里特别清晰 ——你能立刻想起某个角色的声音和某句台词。", "在一堆讲道理的小孩动画里，这种纯粹好玩的东西，其实挺珍贵的。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1E5411h7Kx", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p12": {"lede": "把京剧的身段、唱腔、脸谱，放在一群猫身上，再让它变成一部打得不含糊的功夫动画。", "sections": [{"h": "白糖和那群猫", "ps": ["故事的主角叫白糖，一只不甘心当普通猫的小猫，一心想成为“京剧猫”。他在路上遇到了小青、大飞、武崧这些伙伴，一起往猫土深处走，去面对越来越大的敌人。", "“京剧猫”这个设定本身就带着责任感：它不是让猫穿上戏服卖萌，而是把京剧里的“唱、念、做、打”当作一套真正的战斗体系来用。"]}, {"h": "国产动画里少见的“考据感”", "ps": ["《京剧猫》2015 年开播，由北京璀璨星空文化制作。片子最被称道的，是它的美术与设定：每一只京剧猫的行当、配色、纹样，都能在京剧的行当和脸谱里找到来处。", "打戏也没有敷衍 —— 身段、水袖、亮相，被拆成动作设计，看得出来是认真研究过戏曲的。在国产少儿动画里，这种“愿意下本做文化考据”的作品并不多。"]}, {"h": "口碑很好，路走得很艰难", "ps": ["它在观众那里的评价一直很高，但制作方的经营状况并不好，更新一度长时间停滞，成了粉丝口中“叫好但命苦”的典型。", "这也是国产原创动画这些年反复出现的困境：作品的口碑和它能不能持续做下去，常常是两件不相关的事。"]}, {"h": "现在再看", "ps": ["它让人记住的不是“京剧”这两个字，而是它真的把京剧当成了好看的东西来做。对很多孩子来说，这是他们第一次觉得戏曲的身段“挺帅”。", "如果你当年看过，重看会发现：它的审美比记忆里还要好。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV19f1nBaE17", "page": 1, "label": "【1808+合集】京剧猫：京剧猫第三季乘风破浪（52话全）（23 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1kx411b7qU", "page": 1, "label": "主题曲 OP/ED", "note": "主题曲片段，想听歌就切这个"}]}, "p13": {"lede": "在还没有手游的年代，很多人第一次“养宠物、打对战、做任务”，是在这个网页里。", "sections": [{"h": "放学后先去看一下我的宠物", "ps": ["洛克王国是腾讯在 2010 年上线的儿童社区游戏，电脑上打开就能玩：养精灵、做任务、和朋友比谁的宠物更强。", "对那一代小孩来说，它是“上网”这件事最早的具体形状 ——不是刷视频，而是每天去同一个地方看一眼自己的宠物。"]}, {"h": "然后它有了动画和电影", "ps": ["游戏火了之后，洛克王国从 2011 年起陆续有了动画电影和电视动画。电影版走的是奇幻冒险的路子，TV 动画则更像把游戏里的日常搬上了屏幕：新的伙伴、新的对手、新的宠物。", "主题曲《魔法时刻》是很多人对这部动画的第一印象 ——那种“打开一个世界”的调子，和游戏本身的氛围是接的。"]}, {"h": "一个 IP 的两条命", "ps": ["洛克王国的特殊性在于：它的根在游戏，动画只是它长出来的一根枝。所以对玩家来说，动画好不好看是次要的，“那个世界还在不在”才是重要的。", "这也是国产儿童 IP 的真实样貌：游戏、动画、卡片、玩具常常是一套东西，共同拼出一段童年。"]}, {"h": "现在再看", "ps": ["如今再打开它，界面老了，规则也变了，但那种“每天要回去看一眼”的心情还在。很多人对洛克王国的怀念，其实是对“上网还是一件新鲜事”的那个年代的怀念。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1iw4m1a72V", "page": 1, "label": "【合集】洛克王国大冒险 第一部（52 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV13mR2YfEsh", "page": 1, "label": "主题曲《魔法时刻》", "note": "主题曲片段，想听歌就切这个"}]}, "p14": {"lede": "一句“赛尔号，出发！”，背后是无数个放学后守在电脑前的下午。", "sections": [{"h": "收集、进化、对战", "ps": ["赛尔号是淘米网在 2009 年上线的儿童页游。玩家扮演一名赛尔，驾驶飞船去不同的星球，收服精灵、培养进化、和别人对战。", "它的核心快感特别简单：你花时间养大的那只精灵，在场上突然强得让对手没办法。那种“我的宠物赢了他的宠物”的得意，是那一代小孩共同的记忆。"]}, {"h": "从网页走到屏幕上", "ps": ["2011 年起，赛尔号开始做动画电影，2013 年推出了电视动画的第一季，之后一季接一季地做了很多年，每一季都有自己的主题曲和新的星球、新的对手。", "主角赛小息带着伙伴们满宇宙跑，这套结构和游戏是一致的：永远有下一个星球，永远有更强的精灵。"]}, {"h": "它其实是一门“生意课”", "ps": ["赛尔号和洛克王国一样，是“游戏 + 动画 + 周边”打包出售的典型。动画的作用更像广告和世界观扩写：把游戏里那只画得小小的精灵，变成有性格、有台词的角色。", "看懂这一点，也就看懂了那几年国产儿童内容的运行方式。"]}, {"h": "现在再看", "ps": ["页游时代过去了，但“赛尔号”这三个字对很多人来说不是一款游戏，而是一整段时间：开机、登录、喂食、进化、和同学比一比，然后被妈妈喊去吃饭。", "那种慢吞吞的快乐，现在很难再复刻了。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1Xs411Y7s4", "page": 1, "label": "赛尔号 第1季 雷伊传说（52 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1mY4y1x746", "page": 1, "label": "主题曲（第一季）", "note": "主题曲片段，想听歌就切这个"}]}, "p15": {"lede": "一架红色小飞机，每天送一个包裹到不同的国家 ——对更小的一批孩子来说，这是他们的“第一张世界地图”。", "sections": [{"h": "每集都在“送快递”", "ps": ["2015 年开播的《超级飞侠》，结构简单到近乎完美：有个小朋友需要帮助，乐迪带着包裹出发，飞到那个国家，遇到问题，叫来伙伴，一起解决。", "每一集都会路过一个地方的标志性风景，说几句当地的话，然后办完事飞走。对三五岁的孩子来说，这就是一集一堂课，但一点都不像在上课。"]}, {"h": "它是国产动画“走出去”的一次成功", "ps": ["《超级飞侠》由奥飞娱乐与韩国团队联合制作，在国内播出后又发行到很多国家和地区，是那几年国产少儿动画里海外成绩相当好的一部。", "它能走出去的原因其实很朴素：“不同国家的小孩都需要被帮忙”这个设定，本身就跨语言。"]}, {"h": "“有困难，找超级飞侠”", "ps": ["主题曲那句口号，是这套片子的开关。乐迪、小爱、酷飞、多多，每架飞机有自己的性格和特长，一个人的能力不够，就叫伙伴来 ——这套“团队解决问题”的模板，比讲道理有效得多。", "它的画面干净、颜色明亮，在手机上放给小孩看也完全不糊。很多家庭的“电子安抚奶嘴”，就是这一部。"]}, {"h": "现在再看", "ps": ["它不是那种长大后会反复回味的动画，但它对某一段年龄的孩子非常重要：第一次知道世界上有很多国家，第一次知道有困难可以找人一起解决。", "如果你家里有个小孩正在看，你大概会发现，你也能跟着看完一整集。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1CHZrBaEMy", "page": 1, "label": "【超级飞侠.S5】1080P1集粤国（20 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1k4411b7Ms", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p16": {"lede": "“巴啦啦能量 —— 沙罗沙罗 —— 小魔仙，全身变！” ——只要念得出这句咒语，你就是当年班里最酷的人。", "sections": [{"h": "真人演的魔法少女", "ps": ["《巴啦啦小魔仙》是 2008 年播出的真人魔法少女剧，由广东奥飞参与出品、在嘉佳卡通等频道播出。主角是凌美琪、凌美雪两姐妹，一个有点冒失、一个好胜，机缘巧合下得到魔法，成了“小魔仙”。", "和动画不一样，真人剧里的“变身”是那种会让人真的站起来学的：念咒、比手势、转一圈。课间操场上，谁的动作更像样，谁就有话语权。"]}, {"h": "那句咒语为什么记得那么牢", "ps": ["它的秘诀是节奏：短、押韵、有停顿，最后一下“全身变”留给你的手。所有能被孩子记住的咒语都是这个结构 ——不是靠意义，是靠节奏和动作。", "主题曲《巴啦啦小魔仙》也一样，副歌几乎是口号式的，当年会唱的人比会解题的人多得多。"]}, {"h": "从真人剧长成一个 IP", "ps": ["这一部后来并没有停在真人剧上：陆续出过多个系列的真人剧，也做出了动画版本，还有魔法棒、变身器、卡片这些周边。", "这是当年国产儿童 IP 的标配路线 ——先在电视上抓住孩子，再在玩具货架上再抓一次。"]}, {"h": "现在再看", "ps": ["回头看重看它的特效，会有点想笑：光效朴素、道具感很强。但它最要紧的东西其实做对了 ——它给了小女孩一个“我也能变强”的想象。", "那句“沙罗沙罗”，现在念出来还是有点上头。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1VM4m1D75Y", "page": 1, "label": "巴啦啦小魔仙1 神秘八音盒 第一动画乐园 20110801（20 分钟）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV17x411977R", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p17": {"lede": "“开心往前飞”—— 五个各有毛病的小超人，守着一个叫“星星球”的地方。", "sections": [{"h": "五个不太靠谱的超人", "ps": ["2010 年，《开心宝贝》（后来大家更习惯叫《开心超人》）开播。主角团是开心超人、甜心超人、花心超人、粗心超人、小心超人 ——光看名字就知道，他们没有一个是完美的。", "反派是大大怪和小小怪，一对总在失败、又总在回来的搭档。小时候看的是打闹，长大以后再看，会发现这部片子对“缺点”这件事很宽容：花心的人也能救场，粗心的人也有用。"]}, {"h": "同一个导演，另一种性格", "ps": ["这部片子的导演黄伟明，也是《喜羊羊与灰太狼》早期的导演。他离开原来的团队之后做了《开心宝贝》，所以两部片子有一点隐约的相似：节奏快、角色性格标签明确、靠密集的笑点撑住每一集。", "但它比“羊和狼”更放得开：它有明显的漫画式夸张，甚至带着一点不动声色的“大人梗”。"]}, {"h": "《开心往前飞》", "ps": ["主题曲《开心往前飞》是这部片子的情绪出口：节奏往前冲、旋律向上，配合片头里超人们飞出去的画面，几乎是“放学了”这个感觉的配乐。", "它的副歌也是那种喊一遍就记住的类型。"]}, {"h": "现在再看", "ps": ["它的画风在国产动画里属于“有个性但不讨巧”的一类，可它有一样东西很难得：它不假装自己的主角很厉害。五个超人都在靠自己的缺点活着，这件事现在想，比“打败反派”更治愈。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1pE411G7KS", "page": 1, "label": "【合集】开心超人联盟之能源核守护者（52 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1za4y1v7Rr", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p18": {"lede": "这是一个“人人都有一件神兵”的世界，也是一部让很多人第一次知道“改编漫画”是什么的动画。", "sections": [{"h": "神兵、神兽、和一群孩子", "ps": ["2009 年播出的《神兵小将》改编自香港漫画家黄玉郎的《神兵玄奇》。原作是武侠向的成年漫画，动画版把它重新做成了适合孩子看的样子：主角是一群少年，每个人有自己的神兵和伙伴，一路收集、一路对战。", "主角南宫问天、东方铁心这些人，当年是很多人贴在课本上的名字。"]}, {"h": "《梦的光点》", "ps": ["主题曲《梦的光点》是这一部最牢固的记忆点：旋律明亮、副歌往上走，配着片头里神兵出鞘的画面，一听就想起那个时期的国产动画味道。", "它是那种“能单独拿出来当歌听”的动画主题曲，所以很多年后还在被翻出来单曲循环。"]}, {"h": "改编这件事，当年很新鲜", "ps": ["把一部成年向的武侠漫画改成少儿动画，在当年是个有风险的选择：原作的设定太重，动画必须大幅减负，还得重新设计人物关系。", "它最后做成了一条自己的路：保留“神兵”这个核心设定，把故事讲成少年们的冒险。后来的国产动画改编潮，其实从这里就能看到雏形。"]}, {"h": "现在再看", "ps": ["重看会发现它的打戏和设定都比记忆里“正经”，不是纯粹哄小孩的东西。它讲的是一群人一起把一件难事做完，这种结构放到今天也不过时。", "那首《梦的光点》，现在听起来还是很提气。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1jVGb6gEi2", "page": 1, "label": "神兵小将（全网唯一有字幕）「4K」OP/ED+全（55 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV12s411v7VD", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p19": {"lede": "一个大耳朵的男孩，一个爱唠叨的爸爸，一个总在忙的妈妈 —— 这大概是国产动画里最像我们自己家的一部。", "sections": [{"h": "图图家的日常", "ps": ["《大耳朵图图》2004 年开播，由上海美术电影制片厂出品，导演速达。主角胡图图是个好奇心特别重的小孩，爸爸胡英俊、妈妈张小丽，再加一只叫小怪的猫。", "它几乎没有反派，也没有拯救世界。大多数集讲的就是：图图问了一个奇怪的问题，家里人为难了一下，然后一起把它搞明白。"]}, {"h": "它把“童年”拍得很真", "ps": ["比如“为什么人要上班”“为什么小孩要上学”“长大是什么意思”—— 这些问题是每个小孩都问过的，也是每个家长都被问住过的。", "这部片子难得的地方在于：它没有用一句“长大你就知道了”打发掉，而是真的陪着孩子把这件事想了一遍。"]}, {"h": "两首一直在唱的歌", "ps": ["《快乐小孩》和《问题小孩》是这部片子最出名的两首。“问题小孩”这个说法本身就很有意思 ——在一部给小孩看的动画里，它把“爱问问题”当成一件值得唱的事。", "两首歌都是那种听了会心情变好的类型，和这部片子的底色一致。"]}, {"h": "现在再看", "ps": ["长大以后重看图图，感受会翻过来：小时候觉得图图在闹，现在会觉得爸爸妈妈真不容易。它其实是拍给两代人看的 ——小孩看热闹，大人看自己。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1e66yYREiL", "page": 1, "label": "大耳朵图图第一季01：出生的秘密（16 分钟）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1Ct41117e9", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p20": {"lede": "“大头儿子，小头爸爸，一对好朋友，快乐父子俩。” —— 这首歌几乎不需要学，听两遍就会了。", "sections": [{"h": "一家三口和一堆小事", "ps": ["《大头儿子和小头爸爸》1995 年在央视播出，源自郑春华的童话原作。大头儿子、小头爸爸、围裙妈妈 ——三个人的日常构成了一整部动画。", "它讲的事情都特别小：儿子想养一只小动物、爸爸答应了一件事又后悔、一家人去买菜。但每一集都能落在一个明确的答案上，而且那个答案通常是温的。"]}, {"h": "它其实在教大人怎么当家长", "ps": ["小头爸爸这个角色有点特别：他会认真对待儿子的每个问题，会把“大人也会错”这件事说出口，会蹲下来跟儿子讲话。", "在当年的国产动画里，这种“平视孩子”的父亲形象，是第一次被当作主角来写。所以后来很多家长说，这部片子他们看得比孩子还仔细。"]}, {"h": "它一直在被重做", "ps": ["原版播完之后，这个 IP 在 2013 年前后被重新制作，有了新的三维版本和新的集数，后来又陆续出过新的系列和电影。", "对老观众来说，最认的还是 1995 年那个版本 ——线条简单、颜色干净、配乐一响就回到客厅。"]}, {"h": "现在再看", "ps": ["它没有任何奇观，却把“有人陪你长大”这件事讲得比谁都清楚。现在再看，会发现很多集讲的其实是大人自己也在学着，怎么跟一个小孩相处。", "那首歌到现在还是很好唱：前奏一响，人就回到客厅里了。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV18x411B7vR", "page": 1, "label": "【合集】大头儿子和小头爸爸/大头儿子小头爸爸 151集全（151 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1r4411b7oK", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p21": {"lede": "“三十年河东，三十年河西”—— 不是，那是隔壁那部。这部是唐三和小舞，是史莱克七怪，是每一个周末等更新的晚上。", "sections": [{"h": "从小说到“年番”", "ps": ["《斗罗大陆》原本是唐家三少 2008 年前后开始连载的网络小说，读者体量极大。2018 年，它的动画版开播，由玄机科技制作、企鹅影视出品。", "它做了一件当年很大胆的事：不按季播，而是按周更、长期更，也就是后来大家说的“年番”。从那以后，“每周六上午等更新”成了很多人的固定日程。"]}, {"h": "魂环、魂骨和史莱克", "ps": ["这套世界观最厉害的地方是它的“升级规则”特别清楚：魂士、魂师、大魂师、魂尊、魂宗、魂王……每一级都有明确的标志，主角每突破一次，观众就知道“可以期待下一场了”。", "再配上蓝银草、昊天锤、魂骨这些设定，以及史莱克学院那段“一群怪人凑在一起”的日子，它给了观众一个特别具体的成长坐标。"]}, {"h": "张韶涵唱的那首《破茧》", "ps": ["主题曲《破茧》由张韶涵演唱。歌名和故事几乎是同一件事：主角从弱到强，靠的从来不是天生，而是被逼到墙角之后还往前走。", "这首歌能出圈，是因为它不太像“动画主题曲”，更像一首正经的励志歌 ——很多没看过动画的人也把它放进了歌单。"]}, {"h": "它改变了一件事", "ps": ["在它之前，国产动画大多是“做一季，看看反响”。《斗罗大陆》证明了周更长番在国内也能跑通，于是后面跟着出现了大量改编自网络小说的年番。", "换句话说，你现在能看到这么多“小说改成周更动画”，起点大概就在这里。"]}, {"h": "现在再看", "ps": ["重看会发现它的节奏和特效一路在进步，早期的建模和后期差别很明显 ——这其实也是国产三维动画这十几年成长的记录。", "而真正让人留下的，是那群人：唐三、小舞，还有史莱克那七个。“一起变强”这件事，永远有人爱看。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV17zBVYMEcF", "page": 1, "label": "主题曲《破茧》", "note": "主题曲片段，想听歌就切这个"}]}, "p22": {"lede": "“三十年河东，三十年河西，莫欺少年穷。” —— 这一句，几乎是那一代网文读者共同的青春注脚。", "sections": [{"h": "一部从“被嘲”开始的故事", "ps": ["《斗破苍穹》原作是天蚕土豆的网络小说，2009 年开始连载，主角萧炎是个天才跌落谷底、又一步步爬回来的少年。", "它的核心爽点非常明确：被看不起 → 咬牙变强 → 打回去。这套叙事被无数后来者模仿，而它是那个年代的模板。"]}, {"h": "动画走过一段弯路", "ps": ["2017 年，动画版第一季开播。第一季的口碑并不好，建模和人物形象被观众大量吐槽，成了一个“原著粉不认”的典型。", "但后面的几季明显在往回找：尤其从第四季和《三年之约》开始，打斗设计、人物塑造、氛围都上了一个台阶，口碑也随之翻了回来。这段经历其实很典型：国产改编动画常常是边做边学。"]}, {"h": "《少年泪》", "ps": ["第四季的片头曲《少年泪》是这部动画最出圈的一首歌。它不喊口号，反而写的是少年身上的沉和累，和“变强”这件事背后的代价。", "放在一部以“爽”著称的作品里，这首歌选得很聪明 ——它让这个故事多了一层不轻易说的东西。"]}, {"h": "现在再看", "ps": ["重看会发现它最动人的从来不是萧炎有多强，而是他愿意为一个承诺吃多少苦。药老、萧薰儿、云韵，这些人构成了他往上走的理由。", "“莫欺少年穷”这句话现在被用得很滥，但它原来的意思是：请别急着下结论。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1kK4y127Ww", "page": 1, "label": "主题曲《少年泪》", "note": "主题曲片段，想听歌就切这个"}]}, "p23": {"lede": "“月光色，女子香”—— 一首《月光》，配上刀光剑影，把秦末的江湖搬进了三维动画里。", "sections": [{"h": "把武侠做成三维动画的第一次", "ps": ["2007 年，杭州玄机科技的《秦时明月》第一部《百步飞剑》开播，导演沈乐平。它改编自温世仁的武侠小说，故事背景放在秦灭六国之后、百家争鸣的年代。", "那几年国产三维动画还很少，《秦时明月》几乎是硬着头皮把它做成的。早期画面今天看确实粗糙，但它的野心所有人都看得出来：场景要大气、打斗要有设计、台词要有古意。"]}, {"h": "一部一直在更新的长篇", "ps": ["从《百步飞剑》到《夜尽天明》《诸子百家》《万里长城》《君临天下》《沧海横流》，这个系列一季接一季地做了十几年，跨度大到它的观众是从小学看到了上班。", "荆天明、盖聂、高月、少羽、卫庄、赤练 ——这些名字构成了很多人对“国产武侠动画”的原始印象。"]}, {"h": "胡彦斌的《月光》", "ps": ["主题曲《月光》由胡彦斌演唱，这首歌几乎成了这部动画的另一个名字。它的旋律是对的：中国风的调子、克制的编曲，配上片头里那把出鞘的剑，一下就把“江湖”两个字立起来了。", "很多年后，这首歌在短视频里被重新翻红，不少新一代观众是顺着歌回来补动画的。"]}, {"h": "现在再看", "ps": ["重看会发现它的台词密度在国产动画里少见：大量关于天下、道义、选择的对话，当年听着糊里糊涂，现在反而越听越有重量。", "它讲的不是“谁最强”，而是乱世里，人怎么守住自己的道。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV17dau6BEWj", "page": 1, "label": "【秦时明月 全四季】4K超清未删减完整版（9 分 P）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1qJ411z7z3", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p24": {"lede": "五代十国的乱世里，一边是江湖，一边是朝堂 —— 而主角是个不想当英雄的人。", "sections": [{"h": "乱世、门派、和一个“懒”的主角", "ps": ["2014 年，北京若森数字推出《画江湖之不良人》，这是《画江湖》系列的第一部。背景放在五代十国，主角李星云是李唐后裔，偏偏不愿意接那个位置。", "刚开始看，很多人是被它的打戏吸引的：节奏快、招式有设计感、镜头敢给。看到后面才发现，它真正在讲的是身不由己这四个字。"]}, {"h": "它是“越拍越好”的那一类", "ps": ["国产长篇动画里，能一季比一季好看的并不多，《不良人》是其中一个。从早期的技术粗糙，到后面几季在运镜、配乐、人物关系上的成熟，它的进步是肉眼可见的。", "到第四、第五、第六季，它已经有了一批非常忠诚的观众，讨论的重点从“画面好不好”变成了“人物走到了哪一步”。"]}, {"h": "《天下劫》", "ps": ["第六季的片头曲《天下劫》由官方团队释出，一开口就是压迫感：配合这一季的格局，把“庙堂与江湖一起翻”的气势做了出来。", "它也是那种不看动画也能单听的主题曲。"]}, {"h": "现在再看", "ps": ["这部片子最难的地方在于它敢让角色真的“变了”：有人从少年变成掌局的人，有人从伙伴变成对手。这种变化在动画里是要勇气的 ——因为观众会不舒服。", "而它的观众之所以留下来，大概就是因为这份不舒服：它讲的从来不是一个童话。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV13s4y1L7SM", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p25": {"lede": "“所有活着的人类，都是海里一条巨大的鱼。” —— 这句话一出来，就注定了它不只是一部动画。", "sections": [{"h": "十二年和一部电影", "ps": ["《大鱼海棠》2016 年上映，导演是梁旋和张春，由彼岸天文化制作。它在被看到之前，已经做了很多年 ——一个短片、一次众筹、然后是漫长的等待。", "“等了十二年”这件事，后来成了这部电影的一部分：很多观众进场的时候，带的不只是票钱，还有自己那几年的期待。"]}, {"h": "好看得没话说，也吵得厉害", "ps": ["它的美术几乎是国产动画里最“敢画”的：福建土楼、红灯笼、云海、大鱼在天空里游过去 ——每一帧都能截图当壁纸。", "但剧情是被讨论得最凶的地方。“为了救一个人，值不值得”这个问题，当年在网上吵了很久，直到今天还没有统一的答案。"]}, {"h": "周深的《大鱼》", "ps": ["主题曲《大鱼》由周深演唱。很多人是先听了这首歌，才去看这部电影的。", "它的处理方式很特别：没有把情绪往上推，而是轻轻地飘着 ——像那条鱼在云里穿过去的时候留下的痕迹。这首歌后来成了周深的代表作之一，也成了国产动画歌曲里少见的“独立出圈”样本。"]}, {"h": "现在再看", "ps": ["重看这部电影，大概会比当年更宽容一些：它的故事确实有的地方没说圆，但它想说的那种“为了一个念头不计代价”的东西，是很真诚的。", "“我们会重聚的，无论变成什么模样。” —— 这句台词，到现在还是很打人。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1VvVwz5EcT", "page": 1, "label": "大鱼海棠完整版（223 分钟）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1yg41177nD", "page": 1, "label": "主题曲《大鱼》（周深）", "note": "主题曲片段，想听歌就切这个"}]}, "p26": {"lede": "“我偏要踏出一条自己的路。” —— 这一次，那个喊“我命由我不由天”的人，撞上了整片海。", "sections": [{"h": "一部把纪录改掉两次的电影", "ps": ["《哪吒之魔童闹海》是《哪吒之魔童降世》的续集，同样由饺子（杨宇）执导，2025 年春节档上映。它一上映就把各种票房纪录刷了个遍，让“动画电影能有多大市场”这个问题不再需要讨论。", "对更小的一批观众来说，它不是“童年回忆”——它正在发生。但坐在影厅里的很多人，是一路从第一部的“魔童”看过来的。"]}, {"h": "这一部在讲什么", "ps": ["上一部讲的是“我是谁”；这一部讲的是“我不认”。哪吒和敖丙都被推到了更大的对立面，陈塘关、龙族、阐教与截教，所有的规则都摊在桌面上。", "它的野心很大：把封神这套体系往深处推，不再只是少年打怪，而是让角色去质问规则本身。"]}, {"h": "《就是哪吒》", "ps": ["主题曲《就是哪吒》由唐汉霄演唱。这首歌要的就是燃：鼓点往前推，副歌直接顶上去，和电影里那种“明知不可为还是要上”的气势是一路的。", "它是那种从影厅出来之后还会在脑子里循环的歌。"]}, {"h": "现在再看", "ps": ["如果说第一部让人记住了“我命由我不由天”，那第二部让人记住的是：这句话说出来是要付代价的。", "中国动画用五年时间走到这里，确实值得在多年以后，被当成“我们那年看的那部片子”来回忆。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1R4dFBFE3T", "page": 1, "label": "【4K】《哪吒之魔童闹海》首发4K蓝光原盘高码（140 分钟）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1W5oRY3E82", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p27": {"lede": "“我命由我不由天，是魔是仙，我自己说了算！” —— 2019 年，这句话响遍了整个夏天。", "sections": [{"h": "一个被改坏的“哪吒”", "ps": ["2019 年，饺子（杨宇）执导的《哪吒之魔童降世》上映。它把哪吒重新设定成一个被当成妖怪的孩子：出生就带着魔丸，所有人都说他将来要毁掉一切。", "这个设定让所有熟悉的桥段都变了味：他不是天生正义的小英雄，而是一个被偏见逼着长大的小孩。“我命由我不由天”这句台词，就是从这种处境里长出来的。"]}, {"h": "五年的工期，一群人硬做出来", "ps": ["这部电影从筹备到上映花了五年多，参与制作的团队非常庞杂，很多镜头是国内多个团队一起啃下来的。", "它最终拿了超过 50 亿票房，成了当年国内动画电影的标杆。更重要的是，它让整个行业确认了一件事：国产动画的商业天花板，远比想象中高。"]}, {"h": "两首歌，两种情绪", "ps": ["主题曲《哪吒》由 GAI 演唱，说唱的那种冲劲，和魔童的痞气是一体的。", "片尾曲《今后我与自己流浪》由张碧晨演唱，把整部电影的情绪收到一个特别安静的地方 ——很多人在影厅里是听完了这首歌才起身的。"]}, {"h": "现在再看", "ps": ["它最成功的地方不是特效，是把一个所有人都知道结局的故事，讲成了一个关于“你被怎么看待”的故事。", "哪吒和敖丙在海边踢毽子那段，现在是很多人的“名场面”标准答案。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1HPY7zJEUg", "page": 1, "label": "哪吒之魔童降世2/4K（143 分钟）", "note": "正片/合集，播放器左上角可切换分 P"}, {"bvid": "BV1Wt411V7Ye", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}, "p28": {"lede": "“奇迹再现，就在眼前。” —— 那几年，全国的小孩都在等着光之巨人从城市的楼群里站起来。", "sections": [{"h": "傍晚那半个小时", "ps": ["《迪迦奥特曼》是日本圆谷制作公司在 1996 年推出的作品，2000 年代中期引进国内并配上国语配音播出，很快成了那几年少儿频道最稳的一档节目。", "记忆里的画面很具体：大古掏出神光棒举起来，光一闪，巨人从迪迦的雕像里站起来，然后胸口那颗计时器开始闪红光 ——那一闪，就意味着只剩三分钟了。"]}, {"h": "它不是一个人在战斗", "ps": ["和很多“个人英雄”不同，迪迦背后是整个胜利队在支撑：雷达、战机、联络、撤退掩护。片子里大量镜头是队员之间的配合。", "而迪迦的三种形态切换（复合、力量、天空）让打斗第一次有了“策略”的味道 ——小孩会争论什么时候该换哪种形态。"]}, {"h": "《奇迹再现》", "ps": ["中配版的主题曲《奇迹再现》是很多人心里的“国配主题曲天花板”。它唱的不是战斗，而是“相信光”这件事 ——这大概也是这部片子能被记这么久的原因。", "很多人后来才知道它原本是日版主题曲的中文填词版，但中文这一版在很多人的记忆里才是原版。"]}, {"h": "大古后来去哪了", "ps": ["演大古的长野博后来因为合约和事务所的原因，很少再以迪迦的身份出现在后续作品里，这成了粉丝们长年挂在嘴边的一件憾事。", "但迪迦这个形象一直没退场：它在各种奥特曼作品里被致敬、被召唤，“把光借给我”成了一个跨世代的梗。"]}, {"h": "现在再看", "ps": ["小时候看的是打怪兽，长大以后重看，会发现它讲的是：人在面对更大的东西时，能靠的其实只有身边的人和一点不肯认输的劲。", "那道光，现在看还是亮的。"]}], "video_note": "视频来自哔哩哔哩，版权归原上传者与权利人所有，这里仅作嵌入引用。需要联网播放；若播放器提示“进入哔哩哔哩观看更高清”，点击即可跳转原页面。", "videos": [{"bvid": "BV1Pf4y1x7qH", "page": 1, "label": "主题曲", "note": "主题曲片段，想听歌就切这个"}]}};                 // id -> 子页面内容（讲解 + 视频源）
+const THEME = {"p01": {"bvid": "BV1y8411P7aK", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p02": {"bvid": "BV1qK4y1Z73a", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p03": {"bvid": "BV1o441117ze", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p05": {"bvid": "BV1mE41187KP", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p06": {"bvid": "BV1He4y1p74h", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p07": {"bvid": "BV1g4411u74A", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p08": {"bvid": "BV13f4y1B7rg", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p09": {"bvid": "BV1zu4y1w7Up", "page": 1, "label": "初代片头曲《我还有点小糊涂》", "note": "主题曲视频 · 鼠标移开即停止"}, "p10": {"bvid": "BV1Z4411k7j3", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p11": {"bvid": "BV1E5411h7Kx", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p12": {"bvid": "BV1kx411b7qU", "page": 1, "label": "主题曲 OP/ED", "note": "主题曲视频 · 鼠标移开即停止"}, "p13": {"bvid": "BV13mR2YfEsh", "page": 1, "label": "主题曲《魔法时刻》", "note": "主题曲视频 · 鼠标移开即停止"}, "p14": {"bvid": "BV1mY4y1x746", "page": 1, "label": "主题曲（第一季）", "note": "主题曲视频 · 鼠标移开即停止"}, "p15": {"bvid": "BV1k4411b7Ms", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p16": {"bvid": "BV17x411977R", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p17": {"bvid": "BV1za4y1v7Rr", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p18": {"bvid": "BV12s411v7VD", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p19": {"bvid": "BV1Ct41117e9", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p20": {"bvid": "BV1r4411b7oK", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p21": {"bvid": "BV17zBVYMEcF", "page": 1, "label": "主题曲《破茧》", "note": "主题曲视频 · 鼠标移开即停止"}, "p22": {"bvid": "BV1kK4y127Ww", "page": 1, "label": "主题曲《少年泪》", "note": "主题曲视频 · 鼠标移开即停止"}, "p23": {"bvid": "BV1qJ411z7z3", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p24": {"bvid": "BV13s4y1L7SM", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p25": {"bvid": "BV1yg41177nD", "page": 1, "label": "主题曲《大鱼》（周深）", "note": "主题曲视频 · 鼠标移开即停止"}, "p26": {"bvid": "BV1W5oRY3E82", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p27": {"bvid": "BV1Wt411V7Ye", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}, "p28": {"bvid": "BV1Pf4y1x7qH", "page": 1, "label": "主题曲视频", "note": "主题曲视频 · 鼠标移开即停止"}};                 // id -> 卡片悬停时播的「主题曲视频」
+const GROUPS = ["全部","经典怀旧","国漫少儿","国漫玄幻","动画电影·特摄"];
+let mqHoverPaused = false, mqViewOpen = false;   // 海报带：悬停 / 子页面打开时停滚
+
+const grid = document.getElementById('grid');
+const tabsEl = document.getElementById('tabs');
+const countEl = document.getElementById('count');
+const toast = document.getElementById('toast');
+let toastTimer = null;
+function tip(msg){ toast.textContent = msg; toast.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>toast.classList.remove('show'), 2400); }
+
+/* ---------- 音频：首次交互解锁自动播放 ---------- */
+let audioUnlocked = false;
+['pointerdown','keydown','touchstart'].forEach(ev =>
+  window.addEventListener(ev, ()=>{ audioUnlocked = true; }, { once:true }));
+
+const previews = {};                 // id -> Audio（卡片悬停试听）
+function preview(id){
+  if(!previews[id]){
+    const a = new Audio(DATA.find(d=>d.id===id).songs[0].src);
+    a.loop = true; a.volume = 0.85; a.preload = 'none';
+    previews[id] = a;
+  }
+  return previews[id];
+}
+function stopPreviews(except){
+  Object.keys(previews).forEach(k=>{ if(k!==except){ previews[k].pause(); previews[k].currentTime = 0; }});
+}
+
+/* ---------- 渲染卡片 ---------- */
+let activeGroup = "全部";
+function render(){
+  const list = activeGroup === "全部" ? DATA : DATA.filter(d=>d.group===activeGroup);
+  grid.innerHTML = list.map(d=>{
+    const song = d.songs[0];
+    return `<article class="card" data-id="${d.id}">
+      <div class="cover">
+        <img src="${d.posters[0]}" alt="${d.title}" loading="lazy">
+        <div class="cover-blur" style="background-image:url('${d.posters[0]}')"></div>
+        <div class="cover-mask"></div>
+        <div class="playing-flag"><span class="bar"><i></i><i></i><i></i></span>主题曲视频</div>
+        <div class="cover-title"><h3>${d.title}</h3><span>${d.year} · ${d.group}</span></div>
+      </div>
+      <div class="card-body">
+        <p class="card-desc">${d.desc}</p>
+        <div class="card-tags">${d.tags.map(t=>`<span class="card-tag">${t}</span>`).join('')}</div>
+        <div class="card-song"><i class="fas fa-music"></i>${song.name}</div>
+      </div>
+    </article>`;
+  }).join('');
+  countEl.textContent = `共 ${list.length} 部动画`;
+  bindCards();
+}
+
+function bindCards(){
+  grid.querySelectorAll('.card').forEach(card=>{
+    const id = card.dataset.id;
+    card.addEventListener('mouseenter', ()=>{
+      coverPlayerCancelHide();
+      if (THEME[id] && THEME[id].bvid) card.classList.add('hovering');
+      coverPlayerScheduleShow(id, card);     // 悬停 → 封面换成主题曲视频
+    });
+    card.addEventListener('mouseleave', ()=>{
+      card.classList.remove('hovering');
+      coverPlayerScheduleHide();             // 移开 → 收走视频，海报淡回来
+    });
+    card.addEventListener('click', ()=> { location.hash = '#/a/' + id; });
+  });
+}
+
+/* ---------- 子页面（同文件内路由 #/a/<id>） ---------- */
+const homeEl = document.getElementById('home');
+const pageEl = document.getElementById('subpage');
+const modalAudio = new Audio();
+modalAudio.volume = 0.9;
+let current = null, currentSongIdx = 0;
+
+/* autoplay 必须当成参数统一生成：B 站播放器只认第一个 autoplay，
+   若拼接成 &autoplay=0&autoplay=1，它会取 0 → 不会自动播放（实测踩过）。 */
+const embedUrl = (bvid, page, autoplay = 0) =>
+  `https://player.bilibili.com/player.html?bvid=${bvid}&page=${page || 1}` +
+  `&high_quality=1&danmaku=0&autoplay=${autoplay}`;
+
+/* 视频区：多源时给一排切换按钮 */
+function renderVideo(d){
+  const st = STORY[d.id] || {};
+  const vids = st.videos || [];
+  const tabs = document.getElementById('spVtabs');
+  const frame = document.getElementById('spVideo');
+  const note = document.getElementById('spVnote');
+  note.textContent = st.video_note || '';
+  if (!vids.length){
+    tabs.innerHTML = '';
+    frame.removeAttribute('src');          // 不设 src 就不会发请求
+    frame.style.display = 'none';
+    note.textContent = '这部动画的视频源还在挑，先把海报墙和主题曲放上来。';
+    return;
+  }
+  frame.style.display = '';
+  tabs.innerHTML = vids.map((v, i) =>
+    `<button class="sp-vtab ${i === 0 ? 'active' : ''}" data-i="${i}">${v.label}</button>`).join('');
+  const show = (i) => {
+    frame.src = embedUrl(vids[i].bvid, vids[i].page);
+    tabs.querySelectorAll('.sp-vtab').forEach((b, bi) => b.classList.toggle('active', bi === i));
+  };
+  tabs.querySelectorAll('.sp-vtab').forEach(b =>
+    b.addEventListener('click', () => show(+b.dataset.i)));
+  show(0);
+}
+
+function openAnime(id){
+  const d = DATA.find(x => x.id === id);
+  if (!d) return;
+  current = d;
+  coverPlayerStop();                       // 进子页面就停掉卡片封面里的视频
+  stopPreview();                           // 滚动带上那条试听也停
+  stopPreviews();
+  Object.values(previews).forEach(a => a.pause());
+  const st = STORY[id] || {};
+
+  document.getElementById('crumb').textContent = `童年回忆 / ${d.title}`;
+  document.getElementById('spBg').src = d.posters[0];
+  document.getElementById('spPoster').src = d.posters[0];
+  document.getElementById('spPoster').alt = d.title;
+  document.getElementById('spTitle').textContent = d.title;
+  document.getElementById('spMeta').innerHTML =
+    `<span><i class="far fa-calendar"></i> ${d.year}</span>
+     <span><i class="fas fa-layer-group"></i> ${d.group}</span>
+     <span><i class="fas fa-image"></i> ${d.posters.length} 张海报</span>
+     <span><i class="fas fa-music"></i> ${d.songs.length} 首主题曲</span>`;
+  document.getElementById('spLede').textContent = st.lede || d.desc;
+  document.getElementById('spTags').innerHTML =
+    (d.tags || []).map(t => `<span>${t}</span>`).join('');
+
+  document.getElementById('spStory').innerHTML = (st.sections || []).map(s =>
+    `<h3>${s.h}</h3>` + (s.ps || []).map(p => `<p>${p}</p>`).join('')).join('');
+
+  renderVideo(d);
+
+  // 海报墙
+  const stage = document.getElementById('stageImg');
+  const thumbs = document.getElementById('thumbs');
+  stage.src = d.posters[0];
+  thumbs.innerHTML = d.posters.map((p, i) =>
+    `<img src="${p}" data-i="${i}" class="${i === 0 ? 'active' : ''}" alt="" loading="lazy">`).join('');
+  thumbs.querySelectorAll('img').forEach(t => {
+    t.addEventListener('click', () => {
+      stage.src = t.src;
+      thumbs.querySelectorAll('img').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+    });
+  });
+
+  // 主题曲播放列表
+  const pl = document.getElementById('playlist');
+  pl.innerHTML = d.songs.map((s, i) =>
+    `<div class="playlist-item ${i === 0 ? 'active' : ''}" data-i="${i}">
+       <span><i class="fas fa-music"></i> ${s.name}</span><span>${s.artist || ''}</span>
+     </div>`).join('');
+  pl.querySelectorAll('.playlist-item').forEach(el => {
+    el.addEventListener('click', () => playSong(+el.dataset.i));
+  });
+
+  homeEl.style.display = 'none';
+  pageEl.classList.add('open');
+  mqViewOpen = true;
+  window.scrollTo(0, 0);
+  playSong(0);
+}
+
+function closeAnime(){
+  if (!pageEl.classList.contains('open')) return;
+  modalAudio.pause();
+  mqViewOpen = false;
+  const frame = document.getElementById('spVideo');
+  if (frame) frame.removeAttribute('src');   // 离开子页面就停掉视频
+  pageEl.classList.remove('open');
+  homeEl.style.display = '';
+}
+
+/* 路由 */
+function route(){
+  const m = /^#\/a\/([\w-]+)$/.exec(location.hash || '');
+  if (m && DATA.some(d => d.id === m[1])) openAnime(m[1]);
+  else closeAnime();
+}
+window.addEventListener('hashchange', route);
+document.getElementById('backBtn').addEventListener('click', () => { location.hash = '/'; });
+
+function playSong(i){
+  currentSongIdx = i;
+  const s = current.songs[i];
+  modalAudio.src = s.src;
+  document.getElementById('nowTitle').textContent = s.name;
+  document.getElementById('nowArtist').textContent = s.artist || '';
+  document.getElementById('playlist').querySelectorAll('.playlist-item').forEach((el,idx)=>
+    el.classList.toggle('active', idx===i));
+  modalAudio.play().then(()=> setPlayIcon(true))
+    .catch(()=>{ if(!audioUnlocked) tip('先点一下页面，浏览器才允许自动播放声音'); setPlayIcon(false); });
+}
+
+function setPlayIcon(playing){
+  document.getElementById('playBtn').innerHTML =
+    playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+}
+
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  if(modalAudio.paused){ modalAudio.play(); setPlayIcon(true); }
+  else { modalAudio.pause(); setPlayIcon(false); }
+});
+modalAudio.addEventListener('ended', ()=>{
+  if(current && currentSongIdx < current.songs.length - 1) playSong(currentSongIdx + 1);
+  else setPlayIcon(false);
+});
+
+/* ---------- 卡片悬停 → 视频直接顶替封面 ----------
+   为什么用"销毁 iframe"来停止：
+   实测 B 站外链播放器**不响应** postMessage（{command/type/cmd:'pause'} 全试过）、
+   也不吃直接调内部 <video>.pause() —— 播放器会自己接管并立刻恢复。
+   所以"鼠标移开停止"只能靠撤掉 iframe 的 src，这样 100% 静音，代价是下次悬停要重新加载。
+   为了不显得卡，进入悬停后延迟 260ms 再真正加载；移开后再等 120ms 才撤，
+   这样在卡片之间快速移动鼠标不会反复加载。
+   全站只用一个 iframe 实例：悬停时把它 append 进那张卡片的封面里
+   （DOM 搬家本来就会让 iframe 重载，而这里反正每次都要换 src，所以没额外代价）。 */
+const hoverPlayer = document.getElementById('hoverPlayer');
+const hoverFrame = document.getElementById('hoverFrame');
+const hoverPark = document.getElementById('hoverPark');
+let hoverTimer = null, hoverHideTimer = null, hoverWant = null, hoverShown = null;
+
+function coverPlayerShow(id, cardEl){
+  const tv = THEME[id];
+  if (!tv || !tv.bvid) return;
+  const cover = cardEl.querySelector('.cover');
+  if (!cover) return;
+  if (hoverPlayer.parentElement !== cover) cover.appendChild(hoverPlayer);
+  const url = embedUrl(tv.bvid, tv.page || 1, 1);          // 悬停版：autoplay=1
+  if (hoverFrame.getAttribute('src') !== url) hoverFrame.setAttribute('src', url);
+  hoverShown = id;
+  if (!audioUnlocked) tip('若视频没自动出声，先点一下页面任意处即可');
+}
+
+function coverPlayerStop(){
+  if (hoverTimer){ clearTimeout(hoverTimer); hoverTimer = null; }
+  if (hoverHideTimer){ clearTimeout(hoverHideTimer); hoverHideTimer = null; }
+  hoverWant = null;
+  hoverShown = null;
+  hoverFrame.removeAttribute('src');                       // ← 唯一可靠的停止方式
+  if (hoverPlayer.parentElement !== hoverPark) hoverPark.appendChild(hoverPlayer);
+}
+
+function coverPlayerScheduleShow(id, el){
+  coverPlayerCancelHide();
+  const tv = THEME[id];
+  if (!tv || !tv.bvid){ coverPlayerStop(); return; }        // 这部没有视频源 → 直接停掉
+  if (hoverShown === id) return;
+  hoverWant = id;
+  if (hoverTimer) clearTimeout(hoverTimer);
+  hoverTimer = setTimeout(() => { hoverTimer = null; if (hoverWant === id) coverPlayerShow(id, el); }, 260);
+}
+
+function coverPlayerScheduleHide(){
+  if (hoverHideTimer) clearTimeout(hoverHideTimer);
+  hoverHideTimer = setTimeout(() => { hoverHideTimer = null; coverPlayerStop(); }, 120);
+}
+function coverPlayerCancelHide(){
+  if (hoverHideTimer){ clearTimeout(hoverHideTimer); hoverHideTimer = null; }
+}
+
+/* ---------- 分类标签 ---------- */
+tabsEl.innerHTML = GROUPS.map(g=>
+  `<div class="tab ${g==='全部'?'active':''}" data-g="${g}">${g}</div>`).join('');
+tabsEl.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    tabsEl.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    activeGroup = t.dataset.g;
+    stopPreviews();
+    stopPreview();                          // 滚动带上那条试听也停
+    coverPlayerStop();                      // 换分类会重建卡片，先把视频收回来
+    render();
+  });
+});
+
+/* ---------- Hero 背景：10 条竖长条封面（各占 1/10 宽、高度占满） ---------- */
+const STRIP_TITLES = ["黑猫警长","迪迦奥特曼","葫芦娃","猪猪侠","熊出没",
+                      "喜羊羊与灰太狼","果宝特攻","赛尔号","开心超人","超级飞侠"];
+document.getElementById('heroStrips').innerHTML = STRIP_TITLES.map(t => {
+  const d = DATA.find(x => x.title === t);
+  const img = d ? `<img src="${d.posters[0]}" alt="${t}">` : '';
+  return `<div class="hero-strip" title="${t}">${img}</div>`;
+}).join('');
+
+/* ---------- Hero 滚动海报带（左→中→右，小→大→小） ---------- */
+const marqueeEl = document.getElementById('marquee');
+const mqTrack = document.getElementById('marqueeTrack');
+const MQ_W = 170, MQ_GAP = 28, MQ_STEP = MQ_W + MQ_GAP;
+const MQ_SPEED = 0.5;                    // px/帧 —— 慢慢滚
+const MQ_COPIES = 2;                     // 两份拼接，实现无缝循环
+let mqOffset = 0;
+let mqDragging = false, mqDragStartX = 0, mqDragStartOffset = 0, mqDragMoved = 0;
+
+mqTrack.innerHTML = Array.from({ length: MQ_COPIES }, () =>
+  DATA.map(d => `<div class="mq-item" data-id="${d.id}">
+      <img src="${d.posters[0]}" alt="${d.title}" loading="lazy">
+      <span class="mq-name">${d.title}</span>
+    </div>`).join('')).join('');
+const mqItems = [...mqTrack.children];
+
+function layoutMarquee(){
+  const mid = window.innerWidth / 2;
+  const span = Math.max(window.innerWidth * 0.58, 380);
+  for (let i = 0; i < mqItems.length; i++){
+    const cx = mqOffset + i * MQ_STEP + MQ_W / 2;
+    const t = Math.min(1, Math.abs(cx - mid) / span);
+    const s = 1.35 - 0.66 * t * t;       // 中间 1.35 倍 → 两端 0.69 倍
+    const el = mqItems[i];
+    el.style.transform = `scale(${s.toFixed(3)})`;
+    el.style.zIndex = String(Math.round(s * 100));
+    el.style.opacity = (0.5 + 0.5 * (1 - t)).toFixed(3);
+  }
+}
+
+function wrapOffset(){
+  const total = DATA.length * MQ_STEP;
+  if (total <= 0) return;
+  while (mqOffset <= -total) mqOffset += total;
+  while (mqOffset > 0) mqOffset -= total;
+}
+
+function mqFrame(){
+  if (!(mqHoverPaused || mqViewOpen || mqDragging)){
+    mqOffset -= MQ_SPEED;
+    wrapOffset();
+  }
+  mqTrack.style.transform = `translate3d(${mqOffset}px,0,0)`;
+  layoutMarquee();
+  requestAnimationFrame(mqFrame);
+}
+
+/* 鼠标左键按住拖动（pointer 事件同时兼容触屏） */
+function dragStart(e){
+  if (e.button !== undefined && e.button !== 0) return;   // 只响应左键
+  mqDragging = true;
+  mqDragMoved = 0;
+  mqDragStartX = e.clientX;
+  mqDragStartOffset = mqOffset;
+  marqueeEl.classList.add('dragging');
+  if (marqueeEl.setPointerCapture && e.pointerId !== undefined){
+    try { marqueeEl.setPointerCapture(e.pointerId); } catch(_){}
+  }
+  // 这里**不要** preventDefault：取消 pointerdown 会让浏览器不再派发后续的
+  // mouseenter/mouseleave（连 hover 试听都会失效）。改为用 CSS 挡掉选中和图片拖拽：
+  // .hero-marquee{user-select:none} + .mq-item img{-webkit-user-drag:none}
+}
+function dragMove(e){
+  if (!mqDragging) return;
+  const dx = e.clientX - mqDragStartX;
+  mqDragMoved = Math.max(mqDragMoved, Math.abs(dx));
+  mqOffset = mqDragStartOffset + dx;
+  wrapOffset();
+}
+function dragEnd(){
+  if (!mqDragging) return;
+  mqDragging = false;
+  marqueeEl.classList.remove('dragging');
+}
+marqueeEl.addEventListener('pointerdown', dragStart);
+window.addEventListener('pointermove', dragMove);
+window.addEventListener('pointerup', dragEnd);
+window.addEventListener('pointercancel', dragEnd);
+window.addEventListener('blur', dragEnd);
+
+/* 悬停滚动带：停滚 + 移到哪张就试听哪部动画的主打歌 */
+marqueeEl.addEventListener('mouseenter', () => { mqHoverPaused = true; });
+marqueeEl.addEventListener('mouseleave', () => { mqHoverPaused = false; stopPreview(); });
+
+let mqPlayingId = null;
+function playPreview(id, el){
+  if (mqPlayingId === id) return;
+  stopPreview();
+  const d = DATA.find(x => x.id === id);
+  if (!d || !d.songs.length) return;
+  mqPlayingId = id;
+  if (el) el.classList.add('playing');
+  const a = preview(id);
+  a.currentTime = 0;
+  a.play().catch(() => {
+    if (!audioUnlocked) tip('先点一下页面任意处，悬停试听才会出声');
+  });
+}
+function stopPreview(){
+  if (!mqPlayingId) return;
+  const el = mqItems.find(x => x.dataset.id === mqPlayingId);
+  if (el) el.classList.remove('playing');
+  const a = previews[mqPlayingId];
+  if (a){ a.pause(); a.currentTime = 0; }
+  mqPlayingId = null;
+}
+
+mqItems.forEach(el => {
+  const id = el.dataset.id;
+  el.addEventListener('mouseenter', () => playPreview(id, el));
+  el.addEventListener('mouseleave', () => { if (mqPlayingId === id) stopPreview(); });
+});
+
+/* 点击滚动带里的封面 → 进入那部动画的子页面。
+   这里不用 click 事件：拖动逻辑在 pointerdown 阶段调了 preventDefault，
+   而取消 pointerdown 会连带吞掉兼容的 mouse 事件序列，click 会时有时无。
+   改成自己在 pointerup 里判定（位移 ≤ 8px 才算"点击"），点一下必进页面。
+   注意：dragStart 里对滚动带做了 setPointerCapture，pointerup 会被**重定向**到滚动带本身，
+   e.target 不再是那张封面 —— 所以先用 elementFromPoint 按坐标兜一次。 */
+marqueeEl.addEventListener('pointerup', (e) => {
+  const moved = mqDragMoved;
+  mqDragMoved = 0;
+  if (moved > 8) return;                          // 刚刚是在拖动，不算点击
+  let el = e.target && e.target.closest ? e.target.closest('.mq-item') : null;
+  if (!el){
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    el = hit && hit.closest ? hit.closest('.mq-item') : null;
+  }
+  if (!el) return;
+  stopPreview();
+  location.hash = '#/a/' + el.dataset.id;
+});
+
+mqOffset = -(DATA.length * MQ_STEP) / 2; // 从中间开始，左右都铺满
+requestAnimationFrame(mqFrame);
+
+render();
+route();                                 // 支持直接带 #/a/p01 打开（刷新/分享链接）
+window.__dbg = { DATA, STORY, THEME, previews, modalAudio, openAnime, closeAnime, route,
+                 coverPlayer: { el: hoverPlayer, frame: hoverFrame,
+                                parked: () => hoverPlayer.parentElement === hoverPark,
+                                cardId: () => { const c = hoverPlayer.closest('.card');
+                                                return c ? c.dataset.id : null; },
+                                shown: () => hoverShown,
+                                src: () => hoverFrame.getAttribute('src'),
+                                stop: coverPlayerStop, show: coverPlayerShow },
+                 marquee: { el: marqueeEl, track: mqTrack, items: mqItems,
+                            offset: () => mqOffset, paused: () => mqHoverPaused || mqViewOpen,
+                            dragging: () => mqDragging, moved: () => mqDragMoved,
+                            playingId: () => mqPlayingId, stopPreview,
+                            dragStart, dragMove, dragEnd },
+                 strips: [...document.querySelectorAll('.hero-strip')] };
+</script>
 </body>
 </html>
