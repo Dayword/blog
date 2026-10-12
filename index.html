@@ -112,6 +112,14 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f5f7fa;c
   border:1px solid #eef2f7;color:#5b6879}
 .playlist-item:hover{border-color:#FF6B6B;color:#FF6B6B}
 .playlist-item.active{background:#fff0f0;border-color:#FF6B6B;color:#FF6B6B;font-weight:700}
+/* 主题曲列表：长按拖动排序 */
+.playlist-item{touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.playlist-item.placeholder{opacity:.3}
+body.pl-dragging{cursor:grabbing}
+.pl-ghost{position:fixed;z-index:1200;pointer-events:none;border-radius:10px;
+  display:flex;justify-content:space-between;gap:10px;align-items:center;
+  font-size:13px;padding:9px 13px;background:#fff;border:1px solid #FF6B6B;
+  color:#FF6B6B;font-weight:700;box-shadow:0 16px 36px rgba(24,34,52,.24)}
 .toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:rgba(24,34,52,.94);
   color:#fff;font-size:13.5px;padding:12px 22px;border-radius:40px;z-index:3000;opacity:0;
   pointer-events:none;transition:.3s}
@@ -370,6 +378,141 @@ const modalAudio = new Audio();
 modalAudio.volume = 0.9;
 let current = null, currentSongIdx = 0;
 
+/* ---------- 主题曲列表：长按拖动排序 ----------
+   排序结果存在 localStorage（key 用 src 序列，比下标稳，曲目增删也不会错位）。
+   顺序一变 songs[0] 就变 —— 而卡片 / 滚动带悬停试听取的正是 songs[0]，
+   所以清掉 previews 缓存后，滚动带的试听自然跟着换。 */
+const ORDER_KEY = 'cm-song-order-v1';
+function readOrderMap(){
+  try {
+    const o = JSON.parse(localStorage.getItem(ORDER_KEY) || '{}');
+    return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+  } catch (e) { return {}; }
+}
+function writeOrderMap(o){ try { localStorage.setItem(ORDER_KEY, JSON.stringify(o)); } catch (e) {} }
+
+/* 页面一加载就把存过的顺序应用上：首页卡片显示的曲名也要跟着对 */
+(function applyStoredOrder(){
+  const map = readOrderMap();
+  DATA.forEach(d => {
+    const want = map[d.id];
+    if (!Array.isArray(want) || want.length !== d.songs.length) return;
+    if (new Set(want).size !== want.length) return;
+    const bySrc = new Map(d.songs.map(s => [s.src, s]));
+    const re = want.map(src => bySrc.get(src));
+    if (re.every(Boolean)) d.songs = re;
+  });
+})();
+
+let plSuppressClick = false;
+let plTimer = null, plDragging = false, plDragEl = null, plGhost = null;
+let plStartX = 0, plStartY = 0, plOffsetY = 0;
+
+function resetPreviews(){
+  Object.keys(previews).forEach(k => { try { previews[k].pause(); } catch (e) {} delete previews[k]; });
+}
+
+function syncPlaylistActive(){
+  const pl = document.getElementById('playlist');
+  pl.querySelectorAll('.playlist-item').forEach((el, idx) =>
+    el.classList.toggle('active', idx === currentSongIdx && !!current));
+}
+
+function renderPlaylist(d){
+  const pl = document.getElementById('playlist');
+  pl.innerHTML = d.songs.map((s, i) =>
+    `<div class="playlist-item" data-i="${i}">
+       <span><i class="fas fa-music"></i> ${s.name}</span><span>${s.artist || ''}</span>
+     </div>`).join('');
+  pl.querySelectorAll('.playlist-item').forEach(el =>
+    el.addEventListener('click', () => {
+      if (plSuppressClick) return;             // 刚拖完那一下，别当成点击
+      playSong(+el.dataset.i);
+    }));
+  syncPlaylistActive();
+}
+
+/* 拖动排序：监听绑一次就够（#playlist 容器本身不会被替换） */
+const plEl = document.getElementById('playlist');
+
+plEl.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  const item = e.target.closest('.playlist-item');
+  if (!item || plDragging) return;
+  plStartX = e.clientX; plStartY = e.clientY;
+  clearTimeout(plTimer);
+  plTimer = setTimeout(() => beginSortDrag(item, e.clientY), 420);  // 长按 0.42s 才进入拖动
+});
+
+window.addEventListener('pointermove', e => {
+  if (plDragging){
+    e.preventDefault();
+    plGhost.style.top = (e.clientY - plOffsetY) + 'px';
+    // 指针越过谁的中线就插到谁前面（列表里留一个半透明占位跟着走）
+    const before = [...plEl.querySelectorAll('.playlist-item:not(.placeholder)')]
+      .find(el => e.clientY < el.getBoundingClientRect().top + el.offsetHeight / 2);
+    if (before){ if (before.previousElementSibling !== plDragEl) plEl.insertBefore(plDragEl, before); }
+    else if (plEl.lastElementChild !== plDragEl) plEl.appendChild(plDragEl);
+    return;
+  }
+  // 还没到长按时就移动 → 说明是点击或滚动，取消计时
+  if (plTimer && (Math.abs(e.clientX - plStartX) > 8 || Math.abs(e.clientY - plStartY) > 8))
+    clearTimeout(plTimer);
+}, { passive: false });
+
+window.addEventListener('pointerup', endSortDrag);
+window.addEventListener('pointercancel', endSortDrag);
+
+function beginSortDrag(item, y){
+  plTimer = null;
+  plDragging = true;
+  plDragEl = item;
+  const r = item.getBoundingClientRect();
+  plOffsetY = y - r.top;
+  plGhost = item.cloneNode(true);
+  plGhost.className = 'playlist-item pl-ghost';
+  plGhost.style.left = r.left + 'px';
+  plGhost.style.top = r.top + 'px';
+  plGhost.style.width = r.width + 'px';
+  document.body.appendChild(plGhost);
+  item.classList.add('placeholder');
+  document.body.classList.add('pl-dragging');
+}
+
+function endSortDrag(){
+  clearTimeout(plTimer); plTimer = null;
+  if (!plDragging) return;
+  plDragging = false;
+  document.body.classList.remove('pl-dragging');
+  if (plGhost){ plGhost.remove(); plGhost = null; }
+  if (!plDragEl) return;
+  plDragEl.classList.remove('placeholder');
+
+  const perm = [...plEl.querySelectorAll('.playlist-item')].map(el => +el.dataset.i);
+  const d = current;
+  if (d && !perm.every((v, i) => v === i)){
+    // 正在播的那首记成对象引用，重排后重新定位，播放不中断
+    const playing = (currentSongIdx >= 0 && currentSongIdx < d.songs.length)
+                    ? d.songs[currentSongIdx] : null;
+    const old = d.songs;
+    d.songs = perm.map(i => old[i]);
+    if (playing){ const ni = d.songs.indexOf(playing); if (ni >= 0) currentSongIdx = ni; }
+
+    const map = readOrderMap();
+    map[d.id] = d.songs.map(s => s.src);
+    writeOrderMap(map);
+
+    resetPreviews();   // songs[0] 换了，滚动带 / 卡片的试听缓存作废
+    render();          // 卡片上的曲名与试听源同步更新
+    if (d.songs.length > 1) tip('顺序已保存 · 首页滚动带试听也跟着换');
+  }
+
+  plSuppressClick = true;
+  if (d) renderPlaylist(d);
+  setTimeout(() => { plSuppressClick = false; }, 400);
+  plDragEl = null;
+}
+
 /* autoplay 必须当成参数统一生成：B 站播放器只认第一个 autoplay，
    若拼接成 &autoplay=0&autoplay=1，它会取 0 → 不会自动播放（实测踩过）。 */
 const embedUrl = (bvid, page, autoplay = 0) =>
@@ -446,15 +589,8 @@ function openAnime(id){
     });
   });
 
-  // 主题曲播放列表
-  const pl = document.getElementById('playlist');
-  pl.innerHTML = d.songs.map((s, i) =>
-    `<div class="playlist-item ${i === 0 ? 'active' : ''}" data-i="${i}">
-       <span><i class="fas fa-music"></i> ${s.name}</span><span>${s.artist || ''}</span>
-     </div>`).join('');
-  pl.querySelectorAll('.playlist-item').forEach(el => {
-    el.addEventListener('click', () => playSong(+el.dataset.i));
-  });
+  // 主题曲播放列表（支持长按拖动排序）
+  renderPlaylist(d);
 
   homeEl.style.display = 'none';
   pageEl.classList.add('open');
