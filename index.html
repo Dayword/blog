@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>童年回忆 · 动漫主题曲</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23FF6B6B'/%3E%3Ccircle cx='11' cy='22' r='4' fill='white'/%3E%3Ccircle cx='23' cy='19' r='4' fill='white'/%3E%3Cpath d='M14 22V9l13-2v12' stroke='white' stroke-width='2.6' fill='none'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -107,18 +108,33 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f5f7fa;c
 .now-title{font-size:15px;font-weight:700}
 .now-artist{font-size:12.5px;color:#8b98a9;margin-top:3px}
 .playlist{margin-top:14px;display:flex;flex-direction:column;gap:8px}
-.playlist-item{display:flex;justify-content:space-between;gap:10px;align-items:center;
-  font-size:13px;padding:9px 13px;border-radius:10px;background:#fff;cursor:pointer;
+.playlist-item{display:flex;flex-direction:column;gap:7px;
+  font-size:13px;padding:11px 14px;border-radius:10px;background:#fff;cursor:pointer;
   border:1px solid #eef2f7;color:#5b6879}
 .playlist-item:hover{border-color:#FF6B6B;color:#FF6B6B}
 .playlist-item.active{background:#fff0f0;border-color:#FF6B6B;color:#FF6B6B;font-weight:700}
+.pl-row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+/* 每条主题曲自己的进度条：点一下跳到该处，按住可左右拖 */
+.pl-progress{display:flex;align-items:center;gap:10px;touch-action:none;cursor:pointer}
+.pl-track{position:relative;flex:1;height:5px;border-radius:99px;background:#eef2f7}
+.playlist-item.active .pl-track{background:#ffe1e1}
+.pl-fill{position:absolute;left:0;top:0;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,#FF6B6B,#FF9F45)}
+.pl-progress.dragging .pl-fill{transition:none}
+.pl-knob{position:absolute;top:50%;left:0;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;
+  border-radius:50%;background:#fff;border:2px solid #FF6B6B;
+  box-shadow:0 1px 4px rgba(255,107,107,.45);transform:scale(.65);transition:transform .15s}
+.playlist-item:hover .pl-knob,.playlist-item.active .pl-knob,
+.pl-progress.dragging .pl-knob{transform:scale(1)}
+.pl-time{flex:0 0 auto;min-width:78px;text-align:right;font-size:11.5px;
+  color:#8b98a9;font-variant-numeric:tabular-nums}
+.playlist-item.active .pl-time{color:#ff8a8a}
 /* 主题曲列表：长按拖动排序 */
 .playlist-item{touch-action:pan-y;-webkit-user-select:none;user-select:none}
 .playlist-item.placeholder{opacity:.3}
 body.pl-dragging{cursor:grabbing}
 .pl-ghost{position:fixed;z-index:1200;pointer-events:none;border-radius:10px;
-  display:flex;justify-content:space-between;gap:10px;align-items:center;
-  font-size:13px;padding:9px 13px;background:#fff;border:1px solid #FF6B6B;
+  padding:11px 14px;background:#fff;border:1px solid #FF6B6B;
   color:#FF6B6B;font-weight:700;box-shadow:0 16px 36px rgba(24,34,52,.24)}
 .toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);background:rgba(24,34,52,.94);
   color:#fff;font-size:13.5px;padding:12px 22px;border-radius:40px;z-index:3000;opacity:0;
@@ -422,7 +438,13 @@ function renderPlaylist(d){
   const pl = document.getElementById('playlist');
   pl.innerHTML = d.songs.map((s, i) =>
     `<div class="playlist-item" data-i="${i}">
-       <span><i class="fas fa-music"></i> ${s.name}</span><span>${s.artist || ''}</span>
+       <div class="pl-row">
+         <span><i class="fas fa-music"></i> ${s.name}</span><span>${s.artist || ''}</span>
+       </div>
+       <div class="pl-progress" data-i="${i}">
+         <span class="pl-track"><span class="pl-fill"></span><span class="pl-knob"></span></span>
+         <span class="pl-time">0:00 / --:--</span>
+       </div>
      </div>`).join('');
   pl.querySelectorAll('.playlist-item').forEach(el =>
     el.addEventListener('click', () => {
@@ -430,13 +452,119 @@ function renderPlaylist(d){
       playSong(+el.dataset.i);
     }));
   syncPlaylistActive();
+  resetBars();
 }
+
+/* ---------- 主题曲进度条（每条都能点、能拖） ----------
+   全站只有一个 modalAudio 实例，所以分两种情况：
+   · 拖的是「正在播的那首」→ 直接 seek；
+   · 拖的是「别的曲子」→ 先切到那首，再落到目标位置。注意 src 刚换掉时
+     duration 还是 NaN，这时赋 currentTime 会被直接丢掉，所以用 pendingSeek 兜着，
+     等 loadedmetadata 拿到时长再补上。 */
+let plBarDrag = null, pendingSeek = null;
+
+const fmtTime = t => {
+  if (!isFinite(t) || t < 0) return '--:--';
+  const m = Math.floor(t / 60), s = Math.floor(t % 60);
+  return m + ':' + String(s).padStart(2, '0');
+};
+
+const barEl = i => document.querySelector(`#playlist .pl-progress[data-i="${i}"]`);
+
+function paintBar(i, frac, cur, dur){
+  const el = barEl(i);
+  if (!el) return;
+  const pct = Math.max(0, Math.min(1, frac)) * 100;
+  el.querySelector('.pl-fill').style.width = pct + '%';
+  el.querySelector('.pl-knob').style.left = pct + '%';
+  el.querySelector('.pl-time').textContent = fmtTime(cur) + ' / ' + fmtTime(dur);
+}
+
+function resetBars(){
+  document.querySelectorAll('#playlist .pl-progress').forEach(el => {
+    el.querySelector('.pl-fill').style.width = '0%';
+    el.querySelector('.pl-knob').style.left = '0%';
+    el.querySelector('.pl-time').textContent = '0:00 / --:--';
+  });
+}
+
+function seekFrac(frac){
+  const dur = modalAudio.duration;
+  if (isFinite(dur) && dur > 0){
+    modalAudio.currentTime = Math.min(Math.max(frac, 0), 0.999) * dur;
+    return true;
+  }
+  return false;                                  // 时长还没就绪 → 交给 pendingSeek
+}
+
+function fracFromX(track, x){
+  const r = track.getBoundingClientRect();
+  return r.width ? Math.min(Math.max((x - r.left) / r.width, 0), 1) : 0;
+}
+
+function applyBarDrag(){
+  const { i, track, x } = plBarDrag;
+  const f = fracFromX(track, x);
+  plBarDrag.frac = f;
+  if (!seekFrac(f)) pendingSeek = f;
+  const dur = modalAudio.duration;
+  paintBar(i, f, (isFinite(dur) && dur > 0) ? f * dur : 0, dur);
+}
+
+function endBarDrag(){
+  if (!plBarDrag) return;
+  if (!seekFrac(plBarDrag.frac)) pendingSeek = plBarDrag.frac;
+  plBarDrag.bar.classList.remove('dragging');
+  plBarDrag = null;
+  plSuppressClick = true;                        // 拖完那一下别当成「点条目切歌」
+  setTimeout(() => { plSuppressClick = false; }, 350);
+}
+
+document.getElementById('playlist').addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  const bar = e.target.closest('.pl-progress');
+  if (!bar) return;
+  e.preventDefault();
+  const i = +bar.dataset.i;
+  if (i !== currentSongIdx) playSong(i);         // 点到别的曲子 → 先切歌
+  const track = bar.querySelector('.pl-track');
+  plBarDrag = { i, bar, track, x: e.clientX, frac: 0 };
+  bar.classList.add('dragging');
+  try { bar.setPointerCapture(e.pointerId); } catch (_) {}
+  applyBarDrag();
+});
+
+window.addEventListener('pointermove', e => {
+  if (!plBarDrag) return;
+  e.preventDefault();
+  plBarDrag.x = e.clientX;
+  applyBarDrag();
+}, { passive: false });
+
+window.addEventListener('pointerup', endBarDrag);
+window.addEventListener('pointercancel', endBarDrag);
+
+modalAudio.addEventListener('timeupdate', () => {
+  if (!current || plBarDrag) return;             // 拖动中由手指驱动，别被回调抢回去
+  const dur = modalAudio.duration;
+  const f = (isFinite(dur) && dur > 0) ? modalAudio.currentTime / dur : 0;
+  paintBar(currentSongIdx, f, modalAudio.currentTime, dur);
+});
+
+modalAudio.addEventListener('loadedmetadata', () => {
+  if (pendingSeek != null){ seekFrac(pendingSeek); pendingSeek = null; }
+  if (!current) return;
+  const dur = modalAudio.duration;
+  const f = (isFinite(dur) && dur > 0) ? modalAudio.currentTime / dur : 0;
+  paintBar(currentSongIdx, f, modalAudio.currentTime, dur);
+});
 
 /* 拖动排序：监听绑一次就够（#playlist 容器本身不会被替换） */
 const plEl = document.getElementById('playlist');
 
 plEl.addEventListener('pointerdown', e => {
   if (e.button !== 0) return;
+  if (e.target.closest('.pl-progress')) return;   // 进度条归进度条自己处理，别启动排序
   const item = e.target.closest('.playlist-item');
   if (!item || plDragging) return;
   plStartX = e.clientX; plStartY = e.clientY;
@@ -622,10 +750,12 @@ function playSong(i){
   currentSongIdx = i;
   const s = current.songs[i];
   modalAudio.src = s.src;
+  pendingSeek = null;              // 换曲目了，上一首没落地的 seek 作废
   document.getElementById('nowTitle').textContent = s.name;
   document.getElementById('nowArtist').textContent = s.artist || '';
   document.getElementById('playlist').querySelectorAll('.playlist-item').forEach((el,idx)=>
     el.classList.toggle('active', idx===i));
+  resetBars();
   modalAudio.play().then(()=> setPlayIcon(true))
     .catch(()=>{ if(!audioUnlocked) tip('先点一下页面，浏览器才允许自动播放声音'); setPlayIcon(false); });
 }
