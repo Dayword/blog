@@ -2,7 +2,7 @@
 
 ![童年回忆 · 动画主题馆](preview.jpg)
 
-一个零依赖的单文件静态站：**28 部国产动画**的卡片墙，鼠标悬停时卡片封面直接被 B 站主题曲视频顶替；
+一个零依赖的单文件静态站：**58 部国产动画**的卡片墙，鼠标悬停时卡片封面直接被 B 站主题曲视频顶替；
 顶部是一条自动横向滚动的海报带，悬停停住并试听该片主题曲，点击进对应子页面。
 
 线上地址：<https://dayword.github.io/blog/>
@@ -23,8 +23,8 @@ blog/
 ├── index.html                    # 站点全部内容（单文件，数据内联）
 ├── preview.jpg                   # README 预览图
 ├── assets/
-│   ├── posters/p01..p28/NN.jpg   # 188 张动画海报
-│   └── audio/pNN_N.mp3           # 55 首主题曲（128kbps，约 161 MB）
+│   ├── posters/p01..p58/NN.jpg   # 338 张动画海报
+│   └── audio/pNN_N.mp3           # 85 首主题曲（128kbps，约 239 MB）
 └── .github/workflows/pages.yml   # 推 main 自动部署到 GitHub Pages
 ```
 
@@ -43,7 +43,7 @@ python -m http.server 8000
 生成逻辑封装在 WorkBuddy 技能 `childhood-memories-site` 里：
 
 ```bash
-# 拉素材（243 个文件 / 约 224 MB，已存在的会跳过）
+# 拉素材（423 个文件 / 约 352 MB，已存在的会跳过）
 python scripts/fetch_assets.py --out ./childhood-memories
 # 渲染单文件页面
 python scripts/build_site.py  --out ./childhood-memories
