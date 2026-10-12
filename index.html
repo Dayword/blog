@@ -15,7 +15,6 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f5f7fa;c
   background:linear-gradient(135deg,#FF6B6B,#FFD93D,#6BCB77);-webkit-background-clip:text;
   -webkit-text-fill-color:transparent}
 .logo i{-webkit-text-fill-color:#FF6B6B}
-.nav-hint{font-size:13px;color:#8b98a9}
 .hero{position:relative;min-height:620px;padding:104px 0 34px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:22px;overflow:hidden;background:#18203a}
 /* 背景：10 条竖长条封面（每条占 1/10 宽，高度占满） */
@@ -54,9 +53,6 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f5f7fa;c
 .hero-title{font-size:clamp(38px,7vw,76px);font-weight:800;letter-spacing:4px;
   text-shadow:0 6px 30px rgba(0,0,0,.28)}
 .hero-subtitle{font-size:clamp(15px,2.4vw,22px);margin-top:14px;opacity:.92}
-.hero-tip{margin-top:26px;display:inline-flex;gap:10px;align-items:center;font-size:14px;
-  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
-  padding:10px 20px;border-radius:40px}
 .container{max-width:1480px;margin:0 auto;padding:46px 34px 90px}
 .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
   margin-bottom:30px}
@@ -202,7 +198,6 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f5f7fa;c
 <body>
 <nav class="navbar">
   <div class="logo"><i class="fas fa-tv"></i><span>童年回忆</span></div>
-  <div class="nav-hint"><i class="fas fa-video"></i> 悬停卡片直接播主题曲视频 · 点击进入子页面</div>
 </nav>
 
 <div id="home">
@@ -211,7 +206,6 @@ body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f5f7fa;c
   <div class="hero-content">
     <h1 class="hero-title">童年回忆</h1>
     <p class="hero-subtitle">那些年我们一起追过的动画片主题曲</p>
-    <div class="hero-tip"><i class="fas fa-hand-pointer"></i> 海报自动滚动 · 悬停停住并试听 · 点一下进子页面 · 按住左键可拖动</div>
   </div>
   <div class="hero-marquee" id="marquee"><div class="marquee-track" id="marqueeTrack"></div></div>
 </section>
