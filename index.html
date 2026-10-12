@@ -160,32 +160,36 @@ body.pl-dragging{cursor:grabbing}
 .page-crumb{font-size:13px;color:#9aa6b5}
 .page-inner{max-width:1080px;margin:0 auto;padding:26px 34px 80px}
 
-.sp-hero{position:relative;border-radius:24px;overflow:hidden;background:#1a2138;
-  min-height:290px;display:flex;align-items:flex-end}
-.sp-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  filter:blur(16px) saturate(1.1);transform:scale(1.14);opacity:.5}
+/* 顶部：名称 + 简介在上，整宽 3D 海报轮播在下。
+   底衬是这部动画自己的真实封面 —— N 张封面把整条背景等分成 N 份，
+   每份铺一张、透明度 0.4，再压一层渐变遮罩保证白字可读。 */
+.sp-hero{position:relative;border-radius:24px;overflow:hidden;background:#0b1120}
+.sp-hero-bg{position:absolute;inset:0;display:flex}
+.sp-hero-bg i{display:block;flex:1 1 0;min-width:0;opacity:.4;
+  background-size:cover;background-position:center center;background-repeat:no-repeat}
 .sp-hero-mask{position:absolute;inset:0;
-  background:linear-gradient(90deg,rgba(14,20,38,.93),rgba(14,20,38,.58) 56%,rgba(14,20,38,.34))}
-.sp-hero-main{position:relative;z-index:2;display:flex;gap:26px;align-items:center;
-  padding:26px 32px;width:100%}
-/* 顶部 3D 海报轮播：中间一张占 60%，左右各露 20%（内侧被中间那张盖住），
-   两侧向内侧倾斜 —— 左卡的左边缘、右卡的右边缘都往屏幕里凹。 */
-.cf-wrap{position:relative;flex:0 0 500px;height:434px;overflow:hidden;
-  perspective:1300px}
+  background:linear-gradient(180deg,rgba(8,13,26,.62) 0%,rgba(8,13,26,.32) 46%,rgba(8,13,26,.74) 100%)}
+.sp-hero-main{position:relative;z-index:2;width:100%;padding:30px 34px 42px;
+  display:flex;flex-direction:column;gap:30px}
+/* 3D 海报轮播：铺满整宽，视口按 20% / 60% / 20% 分三段 —— 中间那张居中占据正中，
+   左右两张各自落在两侧 20% 带里；三张高度都撑满轮播高度，
+   左右两张向内侧倾斜（左卡左缘、右卡右缘一起往屏幕里凹，互为镜像）。 */
+.cf-wrap{position:relative;width:100%;height:380px;overflow:hidden;perspective:1500px}
 .cf-inner{position:absolute;inset:0}
-.cf-card{position:absolute;top:50%;left:50%;width:300px;aspect-ratio:3/4;
+.cf-card{position:absolute;top:50%;left:50%;height:100%;aspect-ratio:3/4;
   transform:translate(-50%,-50%);border-radius:14px;overflow:hidden;cursor:pointer;
   background:#0f1826;box-shadow:0 22px 46px rgba(0,0,0,.5);
-  transition:transform .62s cubic-bezier(.22,.61,.36,1),opacity .62s,filter .62s;
-  will-change:transform}
+  transition:left .62s cubic-bezier(.22,.61,.36,1),transform .62s cubic-bezier(.22,.61,.36,1),
+    opacity .62s,filter .62s;
+  will-change:left,transform}
 .cf-card img{display:block;width:100%;height:100%;object-fit:cover}
-.cf-card.is-cur{transform:translate(-50%,-50%);z-index:3;opacity:1}
-/* 卡片宽 = 容器 60%，所以横向偏移 -66.67% 的卡片宽 = 容器 40% —— 正好让左右卡中心落在 10% / 90% */
-.cf-card.is-l{transform:translate(-50%,-50%) translateX(-66.67%) rotateY(-40deg) scale(.82);
-  z-index:2;opacity:.72;filter:brightness(.68) saturate(.8)}
-.cf-card.is-r{transform:translate(-50%,-50%) translateX(66.67%) rotateY(40deg) scale(.82);
-  z-index:2;opacity:.72;filter:brightness(.68) saturate(.8)}
-.cf-card.is-off{transform:translate(-50%,-50%) scale(.66);z-index:1;opacity:0;pointer-events:none}
+.cf-card.is-cur{left:50%;transform:translate(-50%,-50%);z-index:3;opacity:1}
+/* rotateY(-40deg) 的矩阵列主序 m13 = +sin40 → 左卡左缘后退；右卡取反，镜像内凹 */
+.cf-card.is-l{left:14%;transform:translate(-50%,-50%) rotateY(-40deg) scale(.86);
+  z-index:2;opacity:.78;filter:brightness(.7) saturate(.85)}
+.cf-card.is-r{left:86%;transform:translate(-50%,-50%) rotateY(40deg) scale(.86);
+  z-index:2;opacity:.78;filter:brightness(.7) saturate(.85)}
+.cf-card.is-off{left:50%;transform:translate(-50%,-50%) scale(.7);z-index:1;opacity:0;pointer-events:none}
 .cf-nav{position:absolute;top:50%;margin-top:-21px;width:42px;height:42px;padding:0;
   border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(14,20,38,.58);
   color:#fff;font-size:15px;cursor:pointer;z-index:4;
@@ -194,13 +198,11 @@ body.pl-dragging{cursor:grabbing}
 .cf-nav:hover{background:linear-gradient(135deg,#FF6B6B,#FF9F45);border-color:transparent;opacity:1}
 .cf-prev{left:10px}
 .cf-next{right:10px}
-.sp-head{color:#fff;min-width:0}
-.sp-head h1{font-size:clamp(26px,3.6vw,40px);font-weight:800;letter-spacing:1px;line-height:1.2}
-.sp-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;opacity:.82;margin-top:10px}
-.sp-lede{margin-top:14px;font-size:14.5px;line-height:1.85;opacity:.94;max-width:620px}
-.sp-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-.sp-tags span{font-size:11.5px;background:rgba(255,255,255,.16);
-  border:1px solid rgba(255,255,255,.24);padding:4px 11px;border-radius:20px}
+.sp-head{color:#fff;min-width:0;text-align:center}
+.sp-head h1{font-size:clamp(26px,3.6vw,40px);font-weight:800;letter-spacing:1px;line-height:1.2;
+  text-shadow:0 2px 18px rgba(0,0,0,.6)}
+.sp-lede{margin:14px auto 0;font-size:14.5px;line-height:1.85;opacity:.93;
+  max-width:760px;text-shadow:0 1px 10px rgba(0,0,0,.55)}
 
 .sp-sec{margin-top:38px}
 .sp-h2{font-size:19px;font-weight:800;color:#243043;display:flex;align-items:center;gap:10px;
@@ -223,9 +225,13 @@ body.pl-dragging{cursor:grabbing}
 .sp-vnote{font-size:12.5px;color:#9aa6b5;line-height:1.85;margin-top:12px}
 
 @media(max-width:820px){
-  .sp-hero-main{flex-direction:column;align-items:stretch;gap:18px}
-  .cf-wrap{flex:0 0 auto;width:100%;height:300px}
-  .cf-card{width:60%}
+  .sp-hero-main{padding:22px 16px 24px;gap:16px}
+  .cf-wrap{height:250px;perspective:1000px}
+  .cf-card.is-l{left:22%}
+  .cf-card.is-r{left:78%}
+  .cf-nav{width:36px;height:36px;margin-top:-18px;font-size:13px}
+  .cf-prev{left:6px}
+  .cf-next{right:6px}
   .page-bar{padding:12px 18px}
   .page-inner{padding:20px 18px 70px}
   .sp-story{padding:4px 18px 20px}
@@ -266,19 +272,17 @@ body.pl-dragging{cursor:grabbing}
   </div>
   <div class="page-inner">
     <header class="sp-hero">
-      <img class="sp-bg" id="spBg" src="" alt="">
+      <div class="sp-hero-bg" id="spHeroBg"></div>
       <div class="sp-hero-mask"></div>
       <div class="sp-hero-main">
+        <div class="sp-head">
+          <h1 id="spTitle"></h1>
+          <p class="sp-lede" id="spLede"></p>
+        </div>
         <div class="cf-wrap" id="cfWrap">
           <div class="cf-inner" id="cfInner"></div>
           <button class="cf-nav cf-prev" id="cfPrev" aria-label="上一张"><i class="fas fa-chevron-left"></i></button>
           <button class="cf-nav cf-next" id="cfNext" aria-label="下一张"><i class="fas fa-chevron-right"></i></button>
-        </div>
-        <div class="sp-head">
-          <h1 id="spTitle"></h1>
-          <div class="sp-meta" id="spMeta"></div>
-          <p class="sp-lede" id="spLede"></p>
-          <div class="sp-tags" id="spTags"></div>
         </div>
       </div>
     </header>
@@ -444,12 +448,19 @@ function syncPlaylistActive(){
 }
 
 /* ---------- 顶部 3D 海报轮播 ----------
-   视口按 20% / 60% / 20% 分三段：中间那张居中且尺寸不打折，左右两张各露外侧 20%
-   （内侧那一半被中间那张盖住，所以三段加起来正好铺满）。
+   轮播铺满整宽，视口按 20% / 60% / 20% 分三段：中间那张居中且尺寸不打折，
+   左右两张各自落在两侧 20% 带里，三张高度都撑满轮播高度。
    左右两张向内侧倾斜 —— 左卡的左边缘、右卡的右边缘一起往屏幕里退，
    形成「中间凸、两侧向内凹」的立体展台（左右互为镜像）。
    自动缓慢翻页；鼠标停在海报上就停住；两侧圆形按钮可手动翻。 */
 let cfIdx = 0, cfTimer = null, cfHover = false, cfCards = [];
+
+/* 底衬：把这部动画的全部真实封面横向等分铺满整条 hero，每张透明度 0.4 */
+function renderHeroBg(d){
+  const bg = document.getElementById('spHeroBg');
+  const ps = d.posters || [];
+  bg.innerHTML = ps.map(p => `<i style="background-image:url('${p}')"></i>`).join('');
+}
 
 function renderCoverflow(d){
   const inner = document.getElementById('cfInner');
@@ -754,17 +765,10 @@ function openAnime(id){
   const st = STORY[id] || {};
 
   document.getElementById('crumb').textContent = `童年回忆 / ${d.title}`;
-  document.getElementById('spBg').src = d.posters[0];
-  renderCoverflow(d);                      // 顶部 3D 海报轮播
+  renderHeroBg(d);                         // 底衬：真实封面 0.4 透明度横向等分平铺
+  renderCoverflow(d);                      // 顶部整宽 3D 海报轮播
   document.getElementById('spTitle').textContent = d.title;
-  document.getElementById('spMeta').innerHTML =
-    `<span><i class="far fa-calendar"></i> ${d.year}</span>
-     <span><i class="fas fa-layer-group"></i> ${d.group}</span>
-     <span><i class="fas fa-image"></i> ${d.posters.length} 张海报</span>
-     <span><i class="fas fa-music"></i> ${d.songs.length} 首主题曲</span>`;
   document.getElementById('spLede').textContent = st.lede || d.desc;
-  document.getElementById('spTags').innerHTML =
-    (d.tags || []).map(t => `<span>${t}</span>`).join('');
 
   document.getElementById('spStory').innerHTML = (st.sections || []).map(s =>
     `<h3>${s.h}</h3>` + (s.ps || []).map(p => `<p>${p}</p>`).join('')).join('');
